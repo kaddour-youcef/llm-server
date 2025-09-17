@@ -1,5 +1,5 @@
 from sqlalchemy.orm import declarative_base
-from sqlalchemy import Column, Text, Integer, BigInteger, Date, ForeignKey
+from sqlalchemy import Column, Text, Integer, BigInteger, Date, ForeignKey, text
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 
 
@@ -8,14 +8,14 @@ Base = declarative_base()
 
 class User(Base):
     __tablename__ = "users"
-    id = Column(UUID(as_uuid=True), primary_key=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
     name = Column(Text, nullable=False)
     email = Column(Text, nullable=True, unique=True)
 
 
 class APIKey(Base):
     __tablename__ = "api_keys"
-    id = Column(UUID(as_uuid=True), primary_key=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     name = Column(Text, nullable=False)
     key_hash = Column(Text, nullable=False)
@@ -28,7 +28,7 @@ class APIKey(Base):
 
 class Request(Base):
     __tablename__ = "requests"
-    id = Column(UUID(as_uuid=True), primary_key=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
     key_id = Column(UUID(as_uuid=True), ForeignKey("api_keys.id", ondelete="SET NULL"), nullable=False)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=False)
     endpoint = Column(Text, nullable=False)
