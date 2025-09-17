@@ -3,6 +3,7 @@ from ..auth import require_admin, Principal
 from ..db import get_session, create_user as db_create_user, list_users as db_list_users
 from ..db import create_api_key as db_create_key, list_keys as db_list_keys, revoke_key as db_revoke_key, rotate_key as db_rotate_key, audit as db_audit
 from ..schemas import UserCreate, KeyCreate
+from sqlalchemy.exc import IntegrityError
 
 
 router = APIRouter()
@@ -17,7 +18,11 @@ async def list_users(_: Principal = Depends(require_admin)):
 @router.post("/users")
 async def create_user(payload: UserCreate, principal: Principal = Depends(require_admin)):
     with get_session() as db:
-        rec = db_create_user(db, name=payload.name, email=payload.email)
+        try:
+            rec = db_create_user(db, name=payload.name, email=payload.email)
+        except IntegrityError:
+            # duplicate email or other constraint
+            raise HTTPException(status_code=409, detail="Email already exists")
         db_audit(db, principal.key_id, "CREATE_USER", rec["id"], {"name": payload.name})
         return rec
 

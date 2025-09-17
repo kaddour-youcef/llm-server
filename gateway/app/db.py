@@ -6,6 +6,7 @@ from .models import User, APIKey, Audit
 from .security import hash_key
 import secrets
 from typing import Optional, List, Dict, Any
+import uuid
 
 
 engine = create_engine(settings.database_url, pool_pre_ping=True)
@@ -125,7 +126,19 @@ def rotate_key(db: Session, key_id: str) -> Dict[str, Any]:
 
 
 def audit(db: Session, actor_key_id: Optional[str], action: str, target_id: Optional[str], meta: Optional[dict] = None) -> None:
-    rec = Audit(actor_key_id=actor_key_id, action=action, target_id=target_id, meta=meta or {})
+    def _as_uuid(value: Optional[str]) -> Optional[uuid.UUID]:
+        if not value:
+            return None
+        try:
+            return uuid.UUID(str(value))
+        except Exception:
+            return None
+
+    rec = Audit(
+        actor_key_id=_as_uuid(actor_key_id),
+        action=action,
+        target_id=_as_uuid(target_id),
+        meta=meta or {},
+    )
     db.add(rec)
     db.commit()
-
