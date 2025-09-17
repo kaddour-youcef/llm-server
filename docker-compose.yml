@@ -11,8 +11,9 @@ services:
       HUGGING_FACE_HUB_TOKEN: ${HUGGING_FACE_HUB_TOKEN}
     volumes:
       - ~/.cache/huggingface:/root/.cache/huggingface
-    ports:
-      - "8181:8000"
+    # no external port needed
+    expose:
+      - "8000"
     ipc: host
 
   db:
@@ -59,8 +60,7 @@ services:
     environment:
       GATEWAY_URL: http://gateway:8080
     ports:
-      - "8501:8501"
+      - "8181:8501"
 
 volumes:
   pgdata:
-
