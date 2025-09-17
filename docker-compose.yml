@@ -1,0 +1,66 @@
+version: "3.9"
+
+services:
+  vllm:
+    image: vllm/vllm-openai:latest
+    command: >
+      --model mistralai/Mistral-Small-3.2-24B-Instruct-2506
+      --tensor-parallel-size 1
+      --download-dir /workspace
+    environment:
+      HUGGING_FACE_HUB_TOKEN: ${HUGGING_FACE_HUB_TOKEN}
+    volumes:
+      - ~/.cache/huggingface:/root/.cache/huggingface
+    ports:
+      - "8181:8000"
+    ipc: host
+
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: gateway
+      POSTGRES_USER: gateway
+      POSTGRES_PASSWORD: gateway_password
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  gateway:
+    build: ./gateway
+    depends_on:
+      - vllm
+      - db
+      - redis
+    environment:
+      VLLM_URL: ${VLLM_URL:-http://vllm:8000}
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      VLLM_MAX_CONCURRENCY: ${VLLM_MAX_CONCURRENCY:-8}
+      QUEUE_MAX_SIZE: ${QUEUE_MAX_SIZE:-2048}
+      BATCH_MAX_LATENCY_MS: ${BATCH_MAX_LATENCY_MS:-10}
+      RATE_LIMIT_RPS_DEFAULT: ${RATE_LIMIT_RPS_DEFAULT:-10}
+      RATE_LIMIT_BURST_DEFAULT: ${RATE_LIMIT_BURST_DEFAULT:-20}
+      ADMIN_BOOTSTRAP_KEY: ${ADMIN_BOOTSTRAP_KEY}
+      DISPLAY_MODEL_NAME: ${DISPLAY_MODEL_NAME}
+      ALEMBIC_UPGRADE_ON_START: ${ALEMBIC_UPGRADE_ON_START:-true}
+    ports:
+      - "8080:8080"
+
+  admin:
+    build: ./admin
+    depends_on:
+      - gateway
+    environment:
+      GATEWAY_URL: http://gateway:8080
+    ports:
+      - "8501:8501"
+
+volumes:
+  pgdata:
+
