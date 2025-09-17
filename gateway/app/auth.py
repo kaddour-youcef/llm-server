@@ -1,5 +1,9 @@
 from fastapi import Header, HTTPException, status, Depends
 from pydantic import BaseModel
+import os
+from .db import get_session
+from .models import APIKey
+from .security import verify_key
 
 
 class Principal(BaseModel):
@@ -11,14 +15,26 @@ class Principal(BaseModel):
 async def require_key(x_api_key: str | None = Header(default=None)) -> Principal:
     if not x_api_key:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing x-api-key")
-    # TODO: look up hashed key in DB; for now, accept any non-empty key as a placeholder
-    # Derive pseudo IDs for skeleton usage
-    return Principal(key_id="00000000-0000-0000-0000-000000000000", user_id="00000000-0000-0000-0000-000000000000")
+
+    # Bootstrap admin key bypass for initial setup
+    bootstrap = os.getenv("ADMIN_BOOTSTRAP_KEY")
+    if bootstrap and x_api_key == bootstrap:
+        return Principal(key_id="bootstrap", user_id="bootstrap", role="admin")
+
+    last4 = x_api_key[-4:]
+    # Look up keys with matching last4 and verify hash
+    with get_session() as db:
+        candidates = db.query(APIKey).filter(APIKey.key_last4 == last4).all()
+        for k in candidates:
+            if k.status != "active":
+                continue
+            if verify_key(x_api_key, k.key_hash):
+                return Principal(key_id=str(k.id), user_id=str(k.user_id), role=k.role)
+
+    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key")
 
 
 async def require_admin(principal: Principal = Depends(require_key)) -> Principal:
     if principal.role != "admin":
-        # In the skeleton, allow bootstrap via ADMIN_BOOTSTRAP_KEY later
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin required")
     return principal
-

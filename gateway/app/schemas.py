@@ -18,3 +18,31 @@ class ChatCompletionRequest(BaseModel):
     frequency_penalty: Optional[float] = None
     stop: Optional[Any] = None
 
+
+# Admin / Users
+class UserCreate(BaseModel):
+    name: str
+    email: Optional[str] = None
+
+
+class UserOut(BaseModel):
+    id: str
+    name: str
+    email: Optional[str] = None
+
+
+class KeyCreate(BaseModel):
+    user_id: str
+    name: str
+    role: Optional[str] = "user"
+    monthly_quota_tokens: Optional[int] = None
+    daily_request_quota: Optional[int] = None
+
+
+class KeyOut(BaseModel):
+    id: str
+    user_id: str
+    name: str
+    role: str
+    status: str
+    last4: str

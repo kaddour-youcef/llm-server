@@ -1,4 +1,4 @@
-from sqlalchemy.orm import declarative_base, relationship
+from sqlalchemy.orm import declarative_base
 from sqlalchemy import Column, Text, Integer, BigInteger, Date, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 
@@ -62,4 +62,3 @@ class Audit(Base):
     action = Column(Text, nullable=False)
     target_id = Column(UUID(as_uuid=True), nullable=True)
     meta = Column(JSONB, nullable=True)
-
