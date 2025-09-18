@@ -3,7 +3,7 @@ import os
 
 
 class Settings(BaseModel):
-    vllm_url: str = os.getenv("VLLM_URL", "http://localhost:8000")
+    vllm_url: str = os.getenv("VLLM_URL", "http://localhost:8282")
     vllm_timeout_s: int = int(os.getenv("VLLM_TIMEOUT_S", "120"))
     vllm_max_concurrency: int = int(os.getenv("VLLM_MAX_CONCURRENCY", "8"))
     queue_max_size: int = int(os.getenv("QUEUE_MAX_SIZE", "2048"))
@@ -12,7 +12,7 @@ class Settings(BaseModel):
     database_url: str = os.getenv("DATABASE_URL", "postgresql+psycopg://gateway:gateway_password@localhost:5432/gateway")
     redis_url: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
-    admin_origin: str = os.getenv("ADMIN_ORIGIN", "http://localhost:8501")
+    admin_origin: str = os.getenv("ADMIN_ORIGIN", "http://localhost:8181")
     display_model_name: str = os.getenv("DISPLAY_MODEL_NAME", "")
 
     rate_limit_rps_default: int = int(os.getenv("RATE_LIMIT_RPS_DEFAULT", "10"))

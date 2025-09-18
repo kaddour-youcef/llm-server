@@ -1,0 +1,75 @@
+#!/bin/bash
+set -e
+
+# Create network & volume if not already existing
+docker network create llm-net || true
+docker volume create pgdata || true
+
+# 1. Start Postgres
+docker run -d \
+  --name llm-server-db \
+  --network llm-net \
+  -e POSTGRES_DB=gateway \
+  -e POSTGRES_USER=gateway \
+  -e POSTGRES_PASSWORD=gateway_password \
+  -v pgdata:/var/lib/postgresql/data \
+  -p 5432:5432 \
+  --env-file .env \
+  postgres:15
+
+# 2. Start Redis
+docker run -d \
+  --name llm-server-redis \
+  --network llm-net \
+  -p 6379:6379 \
+  redis:7
+
+# 3. Start vLLM (with GPU & HuggingFace token)
+docker run -d \
+  --name vllm \
+  --network llm-net \
+  --runtime=nvidia \
+  --gpus '"device=0"' \
+  -v ~/.cache/huggingface:/root/.cache/huggingface \
+  -v /home/rootxe/extend-qnap/mlstorage-v3/youcef_kaddour_workspace:/workspace \
+  -e HUGGING_FACE_HUB_TOKEN=$HUGGING_FACE_HUB_TOKEN \
+  -p 8181:8000 \
+  --ipc=host \
+  vllm/vllm-openai:a100-cuda12.0 \
+    --model mistralai/Mistral-Small-3.2-24B-Instruct-2506 \
+    --tokenizer-mode mistral \
+    --config-format mistral \
+    --load-format mistral \
+    --tool-call-parser mistral \
+    --enable-auto-tool-choice \
+    --limit-mm-per-prompt 'image=10' \
+    --tensor-parallel-size 1 \
+    --download-dir /workspace
+
+# 4. Build and run Gateway
+docker build -t gateway ./gateway
+docker run -d \
+  --name gateway \
+  --network llm-net \
+  -e VLLM_URL=${VLLM_URL:-http://vllm:8000} \
+  -e DATABASE_URL=$DATABASE_URL \
+  -e REDIS_URL=$REDIS_URL \
+  -e VLLM_MAX_CONCURRENCY=${VLLM_MAX_CONCURRENCY:-8} \
+  -e QUEUE_MAX_SIZE=${QUEUE_MAX_SIZE:-2048} \
+  -e BATCH_MAX_LATENCY_MS=${BATCH_MAX_LATENCY_MS:-10} \
+  -e RATE_LIMIT_RPS_DEFAULT=${RATE_LIMIT_RPS_DEFAULT:-10} \
+  -e RATE_LIMIT_BURST_DEFAULT=${RATE_LIMIT_BURST_DEFAULT:-20} \
+  -e ADMIN_BOOTSTRAP_KEY=$ADMIN_BOOTSTRAP_KEY \
+  -e DISPLAY_MODEL_NAME=$DISPLAY_MODEL_NAME \
+  -e ALEMBIC_UPGRADE_ON_START=${ALEMBIC_UPGRADE_ON_START:-true} \
+  -p 8080:8080 \
+  gateway
+
+# 5. Build and run Admin
+docker build -t admin ./admin
+docker run -d \
+  --name admin \
+  --network llm-net \
+  -e GATEWAY_URL=http://gateway:8080 \
+  -p 8182:8501 \
+  admin
