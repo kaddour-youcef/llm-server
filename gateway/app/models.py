@@ -1,6 +1,8 @@
 from sqlalchemy.orm import declarative_base
 from sqlalchemy import Column, Text, Integer, BigInteger, Date, ForeignKey, text
 from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy import DateTime
+from sqlalchemy.sql import func
 
 
 Base = declarative_base()
@@ -11,6 +13,8 @@ class User(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
     name = Column(Text, nullable=False)
     email = Column(Text, nullable=True, unique=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
 
 
 class APIKey(Base):
@@ -24,6 +28,8 @@ class APIKey(Base):
     status = Column(Text, nullable=False)
     monthly_token_quota = Column(BigInteger, nullable=True)
     daily_request_quota = Column(BigInteger, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
 
 
 class Request(Base):

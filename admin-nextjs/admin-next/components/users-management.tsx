@@ -113,8 +113,9 @@ export function UsersManagement() {
                       <TableCell>{user.email || "—"}</TableCell>
                       <TableCell className="font-mono text-sm">{user.id}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {user.created_at ? new Date(user.created_at).toLocaleDateString() : "—"}
-                      </TableCell>
+                      {user.created_at
+                      ? new Date(user.created_at).toLocaleDateString("en-GB") // gives DD/MM/YYYY
+                      : "—"}                      </TableCell>
                     </TableRow>
                   ))
                 )}

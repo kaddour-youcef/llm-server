@@ -26,13 +26,7 @@ interface ApiKey {
   monthly_quota_tokens?: number | null
   daily_request_quota?: number | null
   created_at?: string
-  is_active?: boolean
-}
-
-interface User {
-  id: string
-  name: string
-  email?: string
+  status: string
 }
 
 export function KeysManagement() {
@@ -131,7 +125,7 @@ export function KeysManagement() {
         <Card className="border-accent/20 bg-accent/5">
           <CardHeader>
             <CardTitle className="text-accent">New API Key Created</CardTitle>
-            <CardDescription>Copy this key now - it won't be shown again</CardDescription>
+            <CardDescription>Copy this key now - it will not be shown again</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
@@ -188,12 +182,15 @@ export function KeysManagement() {
                         <div>Daily: {key.daily_request_quota || "∞"}</div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={key.is_active !== false ? "default" : "destructive"}>
-                          {key.is_active !== false ? "Active" : "Revoked"}
+                        <Badge variant={key.status === "active" ? "default" : "destructive"}>
+                          {key.status === "active" ? "Active" : "Revoked"}
                         </Badge>
                       </TableCell>
+
                       <TableCell className="text-sm text-muted-foreground">
-                        {key.created_at ? new Date(key.created_at).toLocaleDateString() : "—"}
+                      {key.created_at
+                      ? new Date(key.created_at).toLocaleDateString("en-GB") // gives DD/MM/YYYY
+                      : "—"}
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-1">

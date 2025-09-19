@@ -38,7 +38,7 @@ def create_user(db: Session, name: str, email: Optional[str]) -> Dict[str, Any]:
 
 def list_users(db: Session) -> List[Dict[str, Any]]:
     rows = db.query(User).all()
-    return [{"id": str(u.id), "name": u.name, "email": u.email} for u in rows]
+    return [{"id": str(u.id), "name": u.name, "email": u.email, "created_at": u.created_at.isoformat() if hasattr(u, "created_at") and u.created_at else None,} for u in rows]
 
 
 def create_api_key(
@@ -86,6 +86,9 @@ def list_keys(db: Session) -> List[Dict[str, Any]]:
             "role": k.role,
             "status": k.status,
             "last4": k.key_last4,
+            "monthly_quota_tokens": k.monthly_token_quota,
+            "daily_request_quota": k.daily_request_quota,
+            "created_at": k.created_at.isoformat() if hasattr(k, "created_at") and k.created_at else None,
         }
         for k in rows
     ]
@@ -96,10 +99,19 @@ def revoke_key(db: Session, key_id: str) -> Dict[str, Any]:
     if not rec:
         raise ValueError("key not found")
     rec.status = "revoked"
-    db.add(rec)
     db.commit()
     db.refresh(rec)
-    return {"id": str(rec.id), "status": rec.status}
+    return {
+        "id": str(rec.id),
+        "user_id": str(rec.user_id),
+        "name": rec.name,
+        "role": rec.role,
+        "status": rec.status,
+        "last4": rec.key_last4,
+        "monthly_quota_tokens": rec.monthly_token_quota,
+        "daily_request_quota": rec.daily_request_quota,
+        "created_at": rec.created_at.isoformat() if hasattr(rec, "created_at") and rec.created_at else None,
+    }
 
 
 def rotate_key(db: Session, key_id: str) -> Dict[str, Any]:
