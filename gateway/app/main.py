@@ -11,16 +11,35 @@ setup_logging()
 app = FastAPI(title="LLM Gateway")
 
 
-origins = [
-    "http://localhost:3000",
-    os.getenv("ADMIN_ORIGIN", "http://llm-server-admin:3000"),
-]
+# Build CORS origins from env (supports comma-separated list) with sensible defaults
+_default_admin_origin = "http://llm-server-admin:3000"
+origins_set: set[str] = {"http://localhost:3000"}
+
+# Backward-compat single origin
+_single = os.getenv("ADMIN_ORIGIN")
+if _single:
+    origins_set.add(_single.strip())
+
+# Preferred: comma-separated list
+_many = os.getenv("ADMIN_ORIGINS")
+if _many:
+    for item in _many.split(","):
+        if item and item.strip():
+            origins_set.add(item.strip())
+
+# Fallback to in-cluster hostname to preserve previous behavior
+if not _single and not _many:
+    origins_set.add(_default_admin_origin)
+
+allow_origin_regex = os.getenv("ALLOW_ORIGIN_REGEX")  # e.g. ^https?://(localhost|192\.168\.1\.[0-9]+):\d+$
+origins = sorted(origins_set)
 
 
 # Allow your Next.js frontend to talk to the API
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
+    allow_origin_regex=allow_origin_regex,
     allow_credentials=True,
     allow_methods=["*"],  # or ["GET", "POST", "OPTIONS"] if you want to restrict
     allow_headers=["*"],  # allows x-api-key, authorization, etc.
