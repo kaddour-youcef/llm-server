@@ -5,17 +5,22 @@ from .db import init_db
 from .queue import start_dispatcher, stop_dispatcher
 from .logging import setup_logging
 from fastapi.middleware.cors import CORSMiddleware
+import os
 
 setup_logging()
 app = FastAPI(title="LLM Gateway")
 
+
+origins = [
+    "http://localhost:3000",
+    os.getenv("ADMIN_ORIGIN", "http://llm-server-admin:3000"),
+]
+
+
 # Allow your Next.js frontend to talk to the API
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",   # Next.js dev
-        "https://your-frontend.com"  # production domain
-    ],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],  # or ["GET", "POST", "OPTIONS"] if you want to restrict
     allow_headers=["*"],  # allows x-api-key, authorization, etc.

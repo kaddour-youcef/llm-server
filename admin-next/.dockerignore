@@ -1,0 +1,17 @@
+# Git & OS
+.git
+.gitignore
+.env.local
+.env.development
+.env.test
+Dockerfile
+docker-compose*.yml
+node_modules
+npm-debug.log
+yarn.lock
+pnpm-lock.yaml
+
+# Next build artifacts & caches
+.next
+out
+.cache

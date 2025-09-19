@@ -1,4 +1,4 @@
-const GATEWAY_URL = process.env.NEXT_PUBLIC_GATEWAY_URL || "http://localhost:8080"
+const GATEWAY_URL = process.env.GATEWAY_URL || "http://192.168.1.11:8080"
 
 export class ApiClient {
   private apiKey: string | null = null

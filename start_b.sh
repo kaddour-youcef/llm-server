@@ -92,13 +92,14 @@ docker run -d \
 
 
 # 5. Build and run Admin
-docker build -t llm-server-admin ./admin
+docker build -t llm-server-admin ./admin-next/
+
 docker run -d \
   --name llm-server-admin \
   --network llm-net \
   --env-file .env \
   -e GATEWAY_URL=http://gateway:8080 \
-  -p 8181:8501 \
+  -p 8181:3000 \
   llm-server-admin
 
 echo "🚀 All services started successfully:"

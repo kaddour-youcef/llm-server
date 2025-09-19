@@ -12,7 +12,7 @@ class Settings(BaseModel):
     database_url: str = os.getenv("DATABASE_URL", "postgresql+psycopg://gateway:gateway_password@localhost:5432/gateway")
     redis_url: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
-    admin_origin: str = os.getenv("ADMIN_ORIGIN", "http://localhost:8181")
+    admin_origin: str = os.getenv("ADMIN_ORIGIN", "http://llm-server-admin:3000")
     display_model_name: str = os.getenv("DISPLAY_MODEL_NAME", "")
 
     rate_limit_rps_default: int = int(os.getenv("RATE_LIMIT_RPS_DEFAULT", "10"))

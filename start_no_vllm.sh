@@ -53,3 +53,4 @@ docker run -d \
 echo "🚀 All services started successfully:"
 echo "   - Gateway: http://localhost:8080"
 echo "   - Admin:   http://localhost:8181"
+

@@ -41,10 +41,11 @@ export function CreateKeyModal({ open, onOpenChange, onSuccess }: CreateKeyModal
   const [loadingUsers, setLoadingUsers] = useState(false)
   const [userSelectorOpen, setUserSelectorOpen] = useState(false)
   const [formData, setFormData] = useState({
-    name :"",
+    name: "",
     user_id: "",
     role: "user" as "user" | "admin",
-    quota: "",
+    monthlyQuota: "",
+    dailyQuota: "",
   })
 
   useEffect(() => {
@@ -58,7 +59,6 @@ export function CreateKeyModal({ open, onOpenChange, onSuccess }: CreateKeyModal
     try {
       const data = await apiClient.getUsers()
       setUsers(Array.isArray(data) ? data : [data].filter(Boolean))
-
     } catch (err) {
       console.error("Failed to fetch users:", err)
     } finally {
@@ -82,14 +82,18 @@ export function CreateKeyModal({ open, onOpenChange, onSuccess }: CreateKeyModal
     setError("")
     try {
       await apiClient.createKey({
-        name: formData.name,  // <-- include name
+        name: formData.name,
         user_id: formData.user_id,
         role: formData.role,
-        quota: formData.quota ? Number.parseInt(formData.quota) : undefined,
+        monthly_quota_tokens: formData.monthlyQuota ? Number.parseInt(formData.monthlyQuota) : undefined,
+        daily_request_quota: formData.dailyQuota ? Number.parseInt(formData.dailyQuota) : undefined,
       })
       setFormData({
-        user_id: "", role: "user", quota: "",
-        name: ""
+        name: "",
+        user_id: "",
+        role: "user",
+        monthlyQuota: "",
+        dailyQuota: "",
       })
       onSuccess()
       onOpenChange(false)
@@ -102,8 +106,11 @@ export function CreateKeyModal({ open, onOpenChange, onSuccess }: CreateKeyModal
 
   const handleClose = () => {
     setFormData({
-      user_id: "", role: "user", quota: "",
-      name: ""
+      name: "",
+      user_id: "",
+      role: "user",
+      monthlyQuota: "",
+      dailyQuota: "",
     })
     setError("")
     onOpenChange(false)
@@ -118,6 +125,7 @@ export function CreateKeyModal({ open, onOpenChange, onSuccess }: CreateKeyModal
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
+            {/* User selector */}
             <div className="grid gap-2">
               <Label htmlFor="user_id">User *</Label>
               <Popover open={userSelectorOpen} onOpenChange={setUserSelectorOpen}>
@@ -163,6 +171,8 @@ export function CreateKeyModal({ open, onOpenChange, onSuccess }: CreateKeyModal
                 </PopoverContent>
               </Popover>
             </div>
+
+            {/* Key name */}
             <div className="grid gap-2">
               <Label htmlFor="name">Key Name *</Label>
               <Input
@@ -176,6 +186,7 @@ export function CreateKeyModal({ open, onOpenChange, onSuccess }: CreateKeyModal
               />
             </div>
 
+            {/* Role selector */}
             <div className="grid gap-2">
               <Label htmlFor="role">Role</Label>
               <Select
@@ -192,17 +203,33 @@ export function CreateKeyModal({ open, onOpenChange, onSuccess }: CreateKeyModal
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Monthly quota */}
             <div className="grid gap-2">
-              <Label htmlFor="quota">Quota (optional)</Label>
+              <Label htmlFor="monthlyQuota">Monthly Quota (tokens, optional)</Label>
               <Input
-                id="quota"
+                id="monthlyQuota"
                 type="number"
-                value={formData.quota}
-                onChange={(e) => setFormData({ ...formData, quota: e.target.value })}
-                placeholder="Enter quota limit"
+                value={formData.monthlyQuota}
+                onChange={(e) => setFormData({ ...formData, monthlyQuota: e.target.value })}
+                placeholder="Enter monthly token quota"
                 disabled={creating}
               />
             </div>
+
+            {/* Daily quota */}
+            <div className="grid gap-2">
+              <Label htmlFor="dailyQuota">Daily Quota (requests, optional)</Label>
+              <Input
+                id="dailyQuota"
+                type="number"
+                value={formData.dailyQuota}
+                onChange={(e) => setFormData({ ...formData, dailyQuota: e.target.value })}
+                placeholder="Enter daily request quota"
+                disabled={creating}
+              />
+            </div>
+
             {error && (
               <Alert variant="destructive">
                 <AlertDescription>{error}</AlertDescription>
