@@ -12,8 +12,8 @@ app = FastAPI(title="LLM Gateway")
 
 
 # Build CORS origins from env (supports comma-separated list) with sensible defaults
-_default_admin_origin = "http://llm-server-admin:3000"
-origins_set: set[str] = {"http://localhost:3000"}
+_default_admin_origin = "http://llm-server-admin:8181"
+origins_set: set[str] = {"http://localhost:8181"}
 
 # Backward-compat single origin
 _single = os.getenv("ADMIN_ORIGIN")
