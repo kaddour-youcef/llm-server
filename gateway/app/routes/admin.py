@@ -1,9 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from ..auth import require_admin, Principal
 from ..db import get_session, create_user as db_create_user, list_users as db_list_users
 from ..db import create_api_key as db_create_key, list_keys as db_list_keys, revoke_key as db_revoke_key, rotate_key as db_rotate_key, audit as db_audit
 from ..schemas import UserCreate, KeyCreate
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import text
+from datetime import date, timedelta
+import json
 
 
 router = APIRouter()
@@ -71,10 +74,110 @@ async def rotate_key(key_id: str, principal: Principal = Depends(require_admin))
 
 
 @router.get("/usage")
-async def usage(_: Principal = Depends(require_admin)):
-    return {"totals": {"request_count": 0, "total_tokens": 0}, "timeseries": []}
+async def usage(
+    _: Principal = Depends(require_admin),
+    from_date: str | None = Query(default=None, alias="from", description="Start date YYYY-MM-DD (inclusive)"),
+    to_date: str | None = Query(default=None, alias="to", description="End date YYYY-MM-DD (inclusive)"),
+    key_id: str | None = Query(default=None, description="Filter by API key ID"),
+):
+    # Defaults to last 30 days if not provided
+    try:
+        to_dt = date.fromisoformat(to_date) if to_date else date.today()
+        from_dt = date.fromisoformat(from_date) if from_date else (to_dt - timedelta(days=30))
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
+
+    params = {"from": from_dt, "to": to_dt}
+    where_extra = ""
+    if key_id:
+        where_extra = " AND key_id = :key_id"
+        params["key_id"] = key_id
+
+    with get_session() as db:
+        # Totals across the range
+        totals_row = db.execute(
+            text(
+                f"""
+                SELECT 
+                    COALESCE(SUM(request_count), 0) AS request_count,
+                    COALESCE(SUM(total_tokens), 0) AS total_tokens
+                FROM usage_rollups
+                WHERE day BETWEEN :from AND :to
+                {where_extra}
+                """
+            ),
+            params,
+        ).fetchone()
+
+        # Per-day series
+        rows = db.execute(
+            text(
+                f"""
+                SELECT day, 
+                       COALESCE(SUM(request_count), 0) AS request_count,
+                       COALESCE(SUM(total_tokens), 0) AS total_tokens
+                FROM usage_rollups
+                WHERE day BETWEEN :from AND :to
+                {where_extra}
+                GROUP BY day
+                ORDER BY day ASC
+                """
+            ),
+            params,
+        ).fetchall()
+
+        return {
+            "totals": {
+                "request_count": int(totals_row.request_count if totals_row and totals_row.request_count is not None else 0),
+                "total_tokens": int(totals_row.total_tokens if totals_row and totals_row.total_tokens is not None else 0),
+            },
+            "timeseries": [
+                {
+                    "day": r.day.isoformat(),
+                    "request_count": int(r.request_count or 0),
+                    "total_tokens": int(r.total_tokens or 0),
+                }
+                for r in rows
+            ],
+        }
 
 
 @router.get("/requests")
 async def requests(_: Principal = Depends(require_admin)):
-    return []
+    with get_session() as db:
+        rows = db.execute(
+            text(
+                """
+                SELECT id, created_at, endpoint, status_code, latency_ms, user_id, key_id,
+                       total_tokens, error_message, request_body, response_body
+                FROM requests
+                ORDER BY created_at DESC
+                LIMIT 100
+                """
+            )
+        ).fetchall()
+
+        def _to_str(val):
+            return str(val) if val is not None else None
+
+        results = []
+        for r in rows:
+            results.append(
+                {
+                    "id": _to_str(r.id),
+                    "timestamp": r.created_at.isoformat() if getattr(r, "created_at", None) else None,
+                    "method": "POST",  # Current endpoints are POST; default for log display
+                    "endpoint": r.endpoint,
+                    "status_code": r.status_code,
+                    "response_time_ms": r.latency_ms,
+                    "user_id": _to_str(r.user_id),
+                    "key_id": _to_str(r.key_id),
+                    "tokens_used": r.total_tokens,
+                    "error_message": r.error_message,
+                    # The admin UI expects stringified JSON it can JSON.parse safely
+                    "request_body": json.dumps(r.request_body) if r.request_body is not None else None,
+                    "response_body": json.dumps(r.response_body) if r.response_body is not None else None,
+                }
+            )
+
+        return results
