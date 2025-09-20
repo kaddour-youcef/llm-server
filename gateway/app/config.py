@@ -20,6 +20,10 @@ class Settings(BaseModel):
 
     admin_bootstrap_key: str | None = os.getenv("ADMIN_BOOTSTRAP_KEY")
 
+    # Auth/JWT settings
+    auth_secret: str = os.getenv("AUTH_SECRET", "change-me-secret")
+    access_token_ttl_s: int = int(os.getenv("ACCESS_TOKEN_TTL_S", "900"))  # 15 minutes
+    refresh_token_ttl_s: int = int(os.getenv("REFRESH_TOKEN_TTL_S", "2592000"))  # 30 days
+
 
 settings = Settings()
-

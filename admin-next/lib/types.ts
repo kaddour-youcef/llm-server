@@ -17,6 +17,7 @@ export interface User {
   id: string
   name: string
   email?: string | null
+  status?: "pending" | "approved" | "disabled" | null
   created_at?: string | null
 }
 
@@ -45,6 +46,7 @@ export interface CreateUser {
 export interface UpdateUser {
   name?: string
   email?: string
+  status?: "pending" | "approved" | "disabled"
 }
 
 export interface CreateKeyRequest {
@@ -91,4 +93,3 @@ export interface UsageData {
     request_count: number
   }>
 }
-

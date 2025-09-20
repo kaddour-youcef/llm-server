@@ -29,10 +29,12 @@ class UserOut(BaseModel):
     id: str
     name: str
     email: Optional[str] = None
+    status: Optional[str] = None
 
 class UserUpdate(BaseModel):
     name: Optional[str] = None
     email: Optional[str] = None
+    status: Optional[str] = None
 
 
 class KeyCreate(BaseModel):
@@ -56,4 +58,23 @@ class UserDetailOut(BaseModel):
     name: str
     email: Optional[str] = None
     created_at: Optional[str] = None
+    status: Optional[str] = None
     keys: list[KeyOut] = []
+
+
+# Public auth flows
+class SelfRegister(BaseModel):
+    name: str
+    email: str
+    password: str
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"

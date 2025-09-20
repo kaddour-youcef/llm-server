@@ -94,6 +94,54 @@ export class ApiClient {
     })
   }
 
+  // --- User (JWT) Endpoints for end-user portal ---
+  async userRegister(data: { name: string; email: string; password: string }) {
+    const res = await fetch(`${GATEWAY_URL}/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    })
+    if (!res.ok) throw new Error((await res.json()).detail || "Registration failed")
+    return res.json()
+  }
+
+  async userLogin(data: { email: string; password: string }) {
+    const res = await fetch(`${GATEWAY_URL}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify(data),
+      credentials: "include",
+    })
+    if (!res.ok) throw new Error((await res.json()).detail || "Login failed")
+    return res.json() as Promise<{ access_token: string; refresh_token: string; token_type: string }>
+  }
+
+  async userRefresh(refreshToken: string) {
+    const res = await fetch(`${GATEWAY_URL}/auth/refresh`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${refreshToken}` },
+      credentials: "include",
+    })
+    if (!res.ok) throw new Error((await res.json()).detail || "Refresh failed")
+    return res.json() as Promise<{ access_token: string; token_type: string }>
+  }
+
+  async userKeys(accessToken: string) {
+    const res = await fetch(`${GATEWAY_URL}/me/keys`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+    if (!res.ok) throw new Error((await res.json()).detail || "Failed to load keys")
+    return res.json() as Promise<{ items: ApiKey[] }>
+  }
+
+  async userUsage(accessToken: string) {
+    const res = await fetch(`${GATEWAY_URL}/me/usage`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+    if (!res.ok) throw new Error((await res.json()).detail || "Failed to load usage")
+    return res.json() as Promise<{ items: Array<{ key_id: string; request_count: number; total_tokens: number }> }>
+  }
+
   // API Keys
   async getKeys(params?: {
     page?: number

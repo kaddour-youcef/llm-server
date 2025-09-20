@@ -28,6 +28,7 @@ export default function UserDetailPage() {
 
   const [editName, setEditName] = useState("")
   const [editEmail, setEditEmail] = useState("")
+  const [status, setStatus] = useState<"pending" | "approved" | "disabled">("approved")
 
   const [creatingKey, setCreatingKey] = useState(false)
   const [newKeyName, setNewKeyName] = useState("")
@@ -45,6 +46,7 @@ export default function UserDetailPage() {
       setUser(data)
       setEditName(data.name || "")
       setEditEmail(data.email || "")
+      setStatus(((data as any).status as any) || "approved")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch user")
     } finally {
@@ -67,7 +69,7 @@ export default function UserDetailPage() {
         setError(formatZodError(parsed.error))
         return
       }
-      await apiClient.updateUser(userId, parsed.data)
+      await apiClient.updateUser(userId, { ...parsed.data, status })
       setSuccess("User updated successfully")
       fetchUser()
       setTimeout(() => setSuccess(""), 3000)
@@ -191,6 +193,17 @@ export default function UserDetailPage() {
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
                 <Input id="email" type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="status">Status</Label>
+                <Select value={status} onValueChange={(v: any) => setStatus(v)}>
+                  <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">pending</SelectItem>
+                    <SelectItem value="approved">approved</SelectItem>
+                    <SelectItem value="disabled">disabled</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="flex gap-2">
                 <Button type="submit">Save Changes</Button>

@@ -137,14 +137,16 @@ export function UsersManagement() {
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead>User ID</TableHead>
                   <TableHead>Created</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {users.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                       {loading ? "Loading users..." : "No users found"}
                     </TableCell>
                   </TableRow>
@@ -152,16 +154,28 @@ export function UsersManagement() {
                   users.map((user) => (
                     <TableRow key={user.id}>
                       <TableCell className="font-medium">
-                        <Link href={`/users/${user.id}`} className="text-primary hover:underline">
+                        <Link href={`/admin/users/${user.id}`} className="text-primary hover:underline">
                           {user.name}
                         </Link>
                       </TableCell>
                       <TableCell>{user.email || "—"}</TableCell>
+                      <TableCell>
+                        <span className={`text-xs px-2 py-1 rounded ${user.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : user.status === 'approved' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>{user.status || '—'}</span>
+                      </TableCell>
                       <TableCell className="font-mono text-sm">{user.id}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">
                       {user.created_at
                       ? new Date(user.created_at).toLocaleDateString("en-GB") // gives DD/MM/YYYY
-                      : "—"}                      </TableCell>
+                      : "—"}
+                      </TableCell>
+                      <TableCell className="space-x-2">
+                        {user.status === 'pending' && (
+                          <Button size="sm" onClick={async () => { try { await apiClient.updateUser(user.id, { status: 'approved' }); setSuccess('User approved'); fetchUsers(); setTimeout(() => setSuccess(''), 2000) } catch (e) { setError(e instanceof Error ? e.message : 'Approve failed') } }}>Approve</Button>
+                        )}
+                        {user.status !== 'disabled' && (
+                          <Button size="sm" variant="outline" onClick={async () => { try { await apiClient.updateUser(user.id, { status: 'disabled' }); setSuccess('User disabled'); fetchUsers(); setTimeout(() => setSuccess(''), 2000) } catch (e) { setError(e instanceof Error ? e.message : 'Update failed') } }}>Disable</Button>
+                        )}
+                      </TableCell>
                     </TableRow>
                   ))
                 )}

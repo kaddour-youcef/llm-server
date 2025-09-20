@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from .routes import public, admin
+from .routes import public, admin, user
 from .metrics import metrics_router
 from .db import init_db
 from .queue import start_dispatcher, stop_dispatcher
@@ -51,6 +51,7 @@ app.add_middleware(
 
 app.include_router(public.router, prefix="")
 app.include_router(admin.router, prefix="/admin")
+app.include_router(user.router, prefix="")
 app.include_router(metrics_router)
 
 # Prefer lifespan to deprecated on_event hooks so background tasks are managed cleanly

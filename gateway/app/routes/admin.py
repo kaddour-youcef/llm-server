@@ -68,7 +68,7 @@ async def get_user_detail(user_id: str, _: Principal = Depends(require_admin)):
 async def update_user(user_id: str, payload: UserUpdate, principal: Principal = Depends(require_admin)):
     with get_session() as db:
         try:
-            rec = db_update_user(db, user_id, name=payload.name, email=payload.email)
+            rec = db_update_user(db, user_id, name=payload.name, email=payload.email, status=payload.status)
         except IntegrityError:
             raise HTTPException(status_code=409, detail="Email already exists")
         if not rec:

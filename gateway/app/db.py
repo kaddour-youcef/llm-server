@@ -3,7 +3,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from .config import settings
 from .models import User, APIKey, Audit
-from .security import hash_key
+from .security import hash_key, verify_key
 import secrets
 from typing import Optional, List, Dict, Any, Tuple
 from sqlalchemy import asc, desc, or_, cast, String
@@ -29,12 +29,12 @@ def get_session() -> Session:
 
 
 # CRUD helpers (sync, called within endpoints)
-def create_user(db: Session, name: str, email: Optional[str]) -> Dict[str, Any]:
-    user = User(name=name, email=email)
+def create_user(db: Session, name: str, email: Optional[str], status: str = "approved", password_hash: Optional[str] = None) -> Dict[str, Any]:
+    user = User(name=name, email=email, status=status, password_hash=password_hash)
     db.add(user)
     db.commit()
     db.refresh(user)
-    return {"id": str(user.id), "name": user.name, "email": user.email}
+    return {"id": str(user.id), "name": user.name, "email": user.email, "status": user.status}
 
 
 def get_user(db: Session, user_id: str) -> Optional[Dict[str, Any]]:
@@ -45,11 +45,12 @@ def get_user(db: Session, user_id: str) -> Optional[Dict[str, Any]]:
         "id": str(rec.id),
         "name": rec.name,
         "email": rec.email,
+        "status": rec.status,
         "created_at": rec.created_at.isoformat() if hasattr(rec, "created_at") and rec.created_at else None,
     }
 
 
-def update_user(db: Session, user_id: str, name: Optional[str] = None, email: Optional[str] = None) -> Optional[Dict[str, Any]]:
+def update_user(db: Session, user_id: str, name: Optional[str] = None, email: Optional[str] = None, status: Optional[str] = None) -> Optional[Dict[str, Any]]:
     rec: Optional[User] = db.query(User).get(user_id)
     if not rec:
         return None
@@ -57,13 +58,56 @@ def update_user(db: Session, user_id: str, name: Optional[str] = None, email: Op
         rec.name = name
     if email is not None:
         rec.email = email
+    if status is not None:
+        rec.status = status
     db.commit()
     db.refresh(rec)
     return {
         "id": str(rec.id),
         "name": rec.name,
         "email": rec.email,
+        "status": rec.status,
         "created_at": rec.created_at.isoformat() if hasattr(rec, "created_at") and rec.created_at else None,
+    }
+
+
+def get_user_by_email(db: Session, email: str) -> Optional[Dict[str, Any]]:
+    rec: Optional[User] = db.query(User).filter(User.email == email).first()
+    if not rec:
+        return None
+    return {
+        "id": str(rec.id),
+        "name": rec.name,
+        "email": rec.email,
+        "status": rec.status,
+        "password_hash": rec.password_hash,
+    }
+
+
+def self_register_user(db: Session, name: str, email: str, password_plain: str) -> Dict[str, Any]:
+    user = User(
+        name=name,
+        email=email,
+        password_hash=hash_key(password_plain),
+        status="pending",
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return {"id": str(user.id), "name": user.name, "email": user.email, "status": user.status}
+
+
+def verify_user_password(db: Session, email: str, password_plain: str) -> Optional[Dict[str, Any]]:
+    rec: Optional[User] = db.query(User).filter(User.email == email).first()
+    if not rec or not rec.password_hash:
+        return None
+    if not verify_key(password_plain, rec.password_hash):
+        return None
+    return {
+        "id": str(rec.id),
+        "name": rec.name,
+        "email": rec.email,
+        "status": rec.status,
     }
 
 
@@ -100,6 +144,7 @@ def list_users(
                 "id": str(u.id),
                 "name": u.name,
                 "email": u.email,
+                "status": getattr(u, "status", None),
                 "created_at": u.created_at.isoformat()
                 if hasattr(u, "created_at") and u.created_at
                 else None,
