@@ -231,6 +231,7 @@ export function KeysManagement() {
                   <TableHead>Role</TableHead>
                   <TableHead>Quotas</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Expires</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -238,7 +239,7 @@ export function KeysManagement() {
               <TableBody>
                 {keys.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                       {loading ? "Loading API keys..." : "No API keys found"}
                     </TableCell>
                   </TableRow>
@@ -258,6 +259,23 @@ export function KeysManagement() {
                         <Badge variant={key.status === "active" ? "default" : "destructive"}>
                           {key.status === "active" ? "Active" : "Revoked"}
                         </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {key.expires_at ? (
+                          (() => {
+                            const exp = new Date(key.expires_at as string)
+                            const now = new Date()
+                            const isExpired = exp.getTime() < now.getTime()
+                            return (
+                              <span className={isExpired ? "text-red-600" : ""}>
+                                {exp.toLocaleDateString("en-GB")}
+                                {isExpired ? " (expired)" : ""}
+                              </span>
+                            )
+                          })()
+                        ) : (
+                          <span className="text-muted-foreground">Unlimited</span>
+                        )}
                       </TableCell>
 
                       <TableCell className="text-sm text-muted-foreground">

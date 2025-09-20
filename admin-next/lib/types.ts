@@ -30,6 +30,7 @@ export interface ApiKey {
   last4?: string
   monthly_quota_tokens?: number | null
   daily_request_quota?: number | null
+  expires_at?: string | null
   created_at?: string | null
 }
 
@@ -55,6 +56,7 @@ export interface CreateKeyRequest {
   role: ApiKeyRole
   monthly_quota_tokens?: number | null
   daily_request_quota?: number | null
+  expires_at?: string | null
 }
 
 export interface CreateKeyResponse {
@@ -64,6 +66,7 @@ export interface CreateKeyResponse {
   role: ApiKeyRole
   status: ApiKeyStatus
   last4: string
+  expires_at?: string | null
   plaintext_key?: string
 }
 

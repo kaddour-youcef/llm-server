@@ -115,6 +115,7 @@ async def create_key(payload: KeyCreate, principal: Principal = Depends(require_
             role=payload.role or "user",
             monthly_quota_tokens=payload.monthly_quota_tokens,
             daily_request_quota=payload.daily_request_quota,
+            expires_at=payload.expires_at,
         )
         db_audit(db, principal.key_id, "CREATE_KEY", rec["id"], {"name": payload.name})
         return rec

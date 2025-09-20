@@ -43,6 +43,7 @@ class KeyCreate(BaseModel):
     role: Optional[str] = "user"
     monthly_quota_tokens: Optional[int] = None
     daily_request_quota: Optional[int] = None
+    expires_at: Optional[str] = None  # ISO datetime or YYYY-MM-DD; null = unlimited
 
 
 class KeyOut(BaseModel):
@@ -52,6 +53,7 @@ class KeyOut(BaseModel):
     role: str
     status: str
     last4: str
+    expires_at: Optional[str] = None
 
 class UserDetailOut(BaseModel):
     id: str

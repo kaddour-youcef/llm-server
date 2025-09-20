@@ -31,6 +31,7 @@ class APIKey(Base):
     status = Column(Text, nullable=False)
     monthly_token_quota = Column(BigInteger, nullable=True)
     daily_request_quota = Column(BigInteger, nullable=True)
+    expires_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 

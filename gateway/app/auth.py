@@ -4,6 +4,7 @@ import os
 from .db import get_session
 from .models import APIKey
 from .security import verify_key
+from datetime import datetime, timezone
 
 
 class Principal(BaseModel):
@@ -28,6 +29,13 @@ async def require_key(x_api_key: str | None = Header(default=None)) -> Principal
         for k in candidates:
             if k.status != "active":
                 continue
+            # Enforce key expiration: null = unlimited
+            if getattr(k, "expires_at", None):
+                now = datetime.now(timezone.utc)
+                # if stored expires_at is naive, treat as UTC
+                exp = k.expires_at if k.expires_at.tzinfo else k.expires_at.replace(tzinfo=timezone.utc)
+                if now > exp:
+                    continue
             if verify_key(x_api_key, k.key_hash):
                 return Principal(key_id=str(k.id), user_id=str(k.user_id), role=k.role)
 

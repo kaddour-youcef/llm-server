@@ -42,6 +42,8 @@ export function CreateKeyModal({ open, onOpenChange, onSuccess }: CreateKeyModal
     role: "user" as "user" | "admin",
     monthlyQuota: "",
     dailyQuota: "",
+    unlimited: true,
+    expiresAt: "",
   })
 
   useEffect(() => {
@@ -70,7 +72,11 @@ export function CreateKeyModal({ open, onOpenChange, onSuccess }: CreateKeyModal
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     // Zod validation
-    const parsed = CreateKeyFormSchema.safeParse(formData)
+    const parsed = CreateKeyFormSchema.safeParse({
+      ...formData,
+      // ensure boolean
+      unlimited: Boolean(formData.unlimited),
+    })
     if (!parsed.success) {
       setError(formatZodError(parsed.error))
       return
@@ -85,6 +91,7 @@ export function CreateKeyModal({ open, onOpenChange, onSuccess }: CreateKeyModal
         role: parsed.data.role,
         monthly_quota_tokens: parsed.data.monthlyQuota,
         daily_request_quota: parsed.data.dailyQuota,
+        expires_at: parsed.data.unlimited ? undefined : parsed.data.expiresAt,
       })
   
       setFormData({
@@ -93,6 +100,8 @@ export function CreateKeyModal({ open, onOpenChange, onSuccess }: CreateKeyModal
         role: "user",
         monthlyQuota: "",
         dailyQuota: "",
+        unlimited: true,
+        expiresAt: "",
       })
   
       onSuccess(res)            // ✅ send the new plaintext_key up
@@ -112,6 +121,8 @@ export function CreateKeyModal({ open, onOpenChange, onSuccess }: CreateKeyModal
       role: "user",
       monthlyQuota: "",
       dailyQuota: "",
+      unlimited: true,
+      expiresAt: "",
     })
     setError("")
     onOpenChange(false)
@@ -229,6 +240,32 @@ export function CreateKeyModal({ open, onOpenChange, onSuccess }: CreateKeyModal
                 placeholder="Enter daily request quota"
                 disabled={creating}
               />
+            </div>
+
+            {/* Expiration */}
+            <div className="grid gap-2">
+              <Label>Expiration</Label>
+              <div className="flex items-center gap-3">
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={formData.unlimited}
+                    onChange={(e) => setFormData({ ...formData, unlimited: e.target.checked })}
+                    disabled={creating}
+                  />
+                  Unlimited
+                </label>
+                {!formData.unlimited && (
+                  <Input
+                    type="date"
+                    value={formData.expiresAt}
+                    onChange={(e) => setFormData({ ...formData, expiresAt: e.target.value })}
+                    className="w-[200px]"
+                    disabled={creating}
+                  />
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">Leave unlimited checked or pick a date (UTC) when the key expires.</p>
             </div>
 
             {error && (

@@ -85,6 +85,7 @@ export default function UserPortalPage() {
                   <TableHead>Name</TableHead>
                   <TableHead>Last4</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Expires</TableHead>
                   <TableHead>Requests (30d)</TableHead>
                   <TableHead>Tokens (30d)</TableHead>
                 </TableRow>
@@ -95,6 +96,23 @@ export default function UserPortalPage() {
                     <TableCell>{r.name}</TableCell>
                     <TableCell className="font-mono">{r.last4}</TableCell>
                     <TableCell>{r.status}</TableCell>
+                    <TableCell className="text-sm">
+                      {r.expires_at ? (
+                        (() => {
+                          const exp = new Date(r.expires_at as any)
+                          const now = new Date()
+                          const isExpired = exp.getTime() < now.getTime()
+                          return (
+                            <span className={isExpired ? "text-red-600" : ""}>
+                              {exp.toLocaleDateString("en-GB")}
+                              {isExpired ? " (expired)" : ""}
+                            </span>
+                          )
+                        })()
+                      ) : (
+                        <span className="text-muted-foreground">Unlimited</span>
+                      )}
+                    </TableCell>
                     <TableCell>{r.usage.request_count}</TableCell>
                     <TableCell>{r.usage.total_tokens}</TableCell>
                   </TableRow>
@@ -111,4 +129,3 @@ export default function UserPortalPage() {
     </div>
   )
 }
-

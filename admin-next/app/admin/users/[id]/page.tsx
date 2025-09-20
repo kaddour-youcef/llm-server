@@ -37,6 +37,8 @@ export default function UserDetailPage() {
   const [newMonthlyQuota, setNewMonthlyQuota] = useState("")
   const [newDailyQuota, setNewDailyQuota] = useState("")
   const [newPlaintextKey, setNewPlaintextKey] = useState<string | null>(null)
+  const [newUnlimited, setNewUnlimited] = useState(true)
+  const [newExpiresAt, setNewExpiresAt] = useState("")
   const { setExtras, clear } = useBreadcrumbsStore()
 
   const fetchUser = async () => {
@@ -99,6 +101,8 @@ export default function UserDetailPage() {
         role: newKeyRole,
         monthlyQuota: newMonthlyQuota,
         dailyQuota: newDailyQuota,
+        unlimited: newUnlimited,
+        expiresAt: newExpiresAt,
       })
       if (!parsed.success) {
         setError(formatZodError(parsed.error))
@@ -110,6 +114,7 @@ export default function UserDetailPage() {
         role: parsed.data.role,
         monthly_quota_tokens: parsed.data.monthlyQuota,
         daily_request_quota: parsed.data.dailyQuota,
+        expires_at: parsed.data.unlimited ? undefined : parsed.data.expiresAt,
       })
       setSuccess("API key created successfully")
       setNewPlaintextKey(res.plaintext_key ?? null)
@@ -238,6 +243,7 @@ export default function UserDetailPage() {
                     <TableHead>Last4</TableHead>
                     <TableHead>Role</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Expires</TableHead>
                     <TableHead>Created</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
@@ -250,6 +256,23 @@ export default function UserDetailPage() {
                         <TableCell className="font-mono">{k.last4}</TableCell>
                         <TableCell>{k.role}</TableCell>
                         <TableCell>{k.status}</TableCell>
+                        <TableCell className="text-sm">
+                          {k.expires_at ? (
+                            (() => {
+                              const exp = new Date(k.expires_at as any)
+                              const now = new Date()
+                              const isExpired = exp.getTime() < now.getTime()
+                              return (
+                                <span className={isExpired ? "text-red-600" : ""}>
+                                  {exp.toLocaleDateString("en-GB")}
+                                  {isExpired ? " (expired)" : ""}
+                                </span>
+                              )
+                            })()
+                          ) : (
+                            <span className="text-muted-foreground">Unlimited</span>
+                          )}
+                        </TableCell>
                         <TableCell className="text-sm text-muted-foreground">{k.created_at ? new Date(k.created_at).toLocaleDateString("en-GB") : "—"}</TableCell>
                         <TableCell className="flex gap-2">
                           {k.status === 'active' ? (
@@ -314,6 +337,18 @@ export default function UserDetailPage() {
                 <div className="grid gap-2">
                   <Label htmlFor="dailyQuota">Daily Requests (optional)</Label>
                   <Input id="dailyQuota" type="number" value={newDailyQuota} onChange={(e) => setNewDailyQuota(e.target.value)} />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Expiration</Label>
+                  <div className="flex items-center gap-3">
+                    <label className="flex items-center gap-2 text-sm">
+                      <input type="checkbox" checked={newUnlimited} onChange={(e) => setNewUnlimited(e.target.checked)} />
+                      Unlimited
+                    </label>
+                    {!newUnlimited && (
+                      <Input type="date" value={newExpiresAt} onChange={(e) => setNewExpiresAt(e.target.value)} />
+                    )}
+                  </div>
                 </div>
                 <div className="sm:col-span-2 lg:col-span-4 flex gap-2 mt-2">
                   <Button type="submit" disabled={creatingKey}>{creatingKey ? "Creating..." : "Create Key"}</Button>

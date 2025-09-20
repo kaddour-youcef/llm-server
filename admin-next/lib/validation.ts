@@ -44,21 +44,43 @@ const optionalIntFromString = z
   })
 
 // Create Key (Modal) form schema
-export const CreateKeyFormSchema = z.object({
-  user_id: z.string().uuid("Select a valid user"),
-  name: z.string().trim().min(1, "Key name is required"),
-  role: ApiKeyRoleSchema,
-  monthlyQuota: optionalIntFromString,
-  dailyQuota: optionalIntFromString,
-})
+export const CreateKeyFormSchema = z
+  .object({
+    user_id: z.string().uuid("Select a valid user"),
+    name: z.string().trim().min(1, "Key name is required"),
+    role: ApiKeyRoleSchema,
+    monthlyQuota: optionalIntFromString,
+    dailyQuota: optionalIntFromString,
+    unlimited: z.boolean().default(true),
+    expiresAt: z
+      .string()
+      .trim()
+      .optional()
+      .transform((v) => (v === "" ? undefined : v)),
+  })
+  .refine((v) => v.unlimited || Boolean(v.expiresAt), {
+    message: "Provide an expiration date or mark as unlimited",
+    path: ["expiresAt"],
+  })
 
 // Inline Create Key on User Detail page
-export const CreateKeyInlineFormSchema = z.object({
-  name: z.string().trim().min(1, "Key name is required"),
-  role: ApiKeyRoleSchema,
-  monthlyQuota: optionalIntFromString,
-  dailyQuota: optionalIntFromString,
-})
+export const CreateKeyInlineFormSchema = z
+  .object({
+    name: z.string().trim().min(1, "Key name is required"),
+    role: ApiKeyRoleSchema,
+    monthlyQuota: optionalIntFromString,
+    dailyQuota: optionalIntFromString,
+    unlimited: z.boolean().default(true),
+    expiresAt: z
+      .string()
+      .trim()
+      .optional()
+      .transform((v) => (v === "" ? undefined : v)),
+  })
+  .refine((v) => v.unlimited || Boolean(v.expiresAt), {
+    message: "Provide an expiration date or mark as unlimited",
+    path: ["expiresAt"],
+  })
 
 export function formatZodError(err: z.ZodError): string {
   const { fieldErrors, formErrors } = err.flatten()
@@ -68,4 +90,3 @@ export function formatZodError(err: z.ZodError): string {
   const msgs = [...formErrors, ...fieldMsgs]
   return msgs.length ? msgs.join("; ") : "Invalid form input"
 }
-
