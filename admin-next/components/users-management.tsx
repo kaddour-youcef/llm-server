@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { RefreshCw, Plus, Users, AlertCircleIcon, CheckCircle2Icon } from "lucide-react"
 import { apiClient } from "@/lib/api"
+import Link from "next/link"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { CreateUserModal } from "./modals/create-user-modal"
@@ -158,7 +159,11 @@ export function UsersManagement() {
                 ) : (
                   users.map((user) => (
                     <TableRow key={user.id}>
-                      <TableCell className="font-medium">{user.name}</TableCell>
+                      <TableCell className="font-medium">
+                        <Link href={`/users/${user.id}`} className="text-primary hover:underline">
+                          {user.name}
+                        </Link>
+                      </TableCell>
                       <TableCell>{user.email || "—"}</TableCell>
                       <TableCell className="font-mono text-sm">{user.id}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">

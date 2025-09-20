@@ -30,6 +30,10 @@ class UserOut(BaseModel):
     name: str
     email: Optional[str] = None
 
+class UserUpdate(BaseModel):
+    name: Optional[str] = None
+    email: Optional[str] = None
+
 
 class KeyCreate(BaseModel):
     user_id: str
@@ -46,3 +50,10 @@ class KeyOut(BaseModel):
     role: str
     status: str
     last4: str
+
+class UserDetailOut(BaseModel):
+    id: str
+    name: str
+    email: Optional[str] = None
+    created_at: Optional[str] = None
+    keys: list[KeyOut] = []

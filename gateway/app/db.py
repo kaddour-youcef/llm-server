@@ -37,6 +37,36 @@ def create_user(db: Session, name: str, email: Optional[str]) -> Dict[str, Any]:
     return {"id": str(user.id), "name": user.name, "email": user.email}
 
 
+def get_user(db: Session, user_id: str) -> Optional[Dict[str, Any]]:
+    rec: Optional[User] = db.query(User).get(user_id)
+    if not rec:
+        return None
+    return {
+        "id": str(rec.id),
+        "name": rec.name,
+        "email": rec.email,
+        "created_at": rec.created_at.isoformat() if hasattr(rec, "created_at") and rec.created_at else None,
+    }
+
+
+def update_user(db: Session, user_id: str, name: Optional[str] = None, email: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    rec: Optional[User] = db.query(User).get(user_id)
+    if not rec:
+        return None
+    if name is not None:
+        rec.name = name
+    if email is not None:
+        rec.email = email
+    db.commit()
+    db.refresh(rec)
+    return {
+        "id": str(rec.id),
+        "name": rec.name,
+        "email": rec.email,
+        "created_at": rec.created_at.isoformat() if hasattr(rec, "created_at") and rec.created_at else None,
+    }
+
+
 def list_users(
     db: Session,
     page: Optional[int] = None,
@@ -173,6 +203,24 @@ def list_keys(
         ],
         total,
     )
+
+
+def list_keys_for_user(db: Session, user_id: str) -> List[Dict[str, Any]]:
+    rows = db.query(APIKey).filter(APIKey.user_id == user_id).order_by(desc(APIKey.created_at)).all()
+    return [
+        {
+            "id": str(k.id),
+            "user_id": str(k.user_id),
+            "name": k.name,
+            "role": k.role,
+            "status": k.status,
+            "last4": k.key_last4,
+            "monthly_quota_tokens": k.monthly_token_quota,
+            "daily_request_quota": k.daily_request_quota,
+            "created_at": k.created_at.isoformat() if hasattr(k, "created_at") and k.created_at else None,
+        }
+        for k in rows
+    ]
 
 
 def revoke_key(db: Session, key_id: str) -> Dict[str, Any]:

@@ -56,6 +56,17 @@ export class ApiClient {
     })
   }
 
+  async getUser(userId: string) {
+    return this.request(`/admin/users/${userId}`)
+  }
+
+  async updateUser(userId: string, data: { name?: string; email?: string }) {
+    return this.request(`/admin/users/${userId}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    })
+  }
+
   // API Keys
   async getKeys(params?: {
     page?: number

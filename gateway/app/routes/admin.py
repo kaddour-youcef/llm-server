@@ -1,8 +1,19 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from ..auth import require_admin, Principal
-from ..db import get_session, create_user as db_create_user, list_users as db_list_users
-from ..db import create_api_key as db_create_key, list_keys as db_list_keys, revoke_key as db_revoke_key, rotate_key as db_rotate_key, audit as db_audit
-from ..schemas import UserCreate, KeyCreate
+from ..db import (
+    get_session,
+    create_user as db_create_user,
+    list_users as db_list_users,
+)
+from ..db import (
+    create_api_key as db_create_key,
+    list_keys as db_list_keys,
+    revoke_key as db_revoke_key,
+    rotate_key as db_rotate_key,
+    audit as db_audit,
+)
+from ..db import get_user as db_get_user, update_user as db_update_user, list_keys_for_user as db_list_keys_for_user
+from ..schemas import UserCreate, KeyCreate, UserUpdate
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import text
 from datetime import date, timedelta
@@ -40,6 +51,29 @@ async def create_user(payload: UserCreate, principal: Principal = Depends(requir
             # duplicate email or other constraint
             raise HTTPException(status_code=409, detail="Email already exists")
         db_audit(db, principal.key_id, "CREATE_USER", rec["id"], {"name": payload.name})
+        return rec
+
+
+@router.get("/users/{user_id}")
+async def get_user_detail(user_id: str, _: Principal = Depends(require_admin)):
+    with get_session() as db:
+        user = db_get_user(db, user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        keys = db_list_keys_for_user(db, user_id)
+        return {**user, "keys": keys}
+
+
+@router.patch("/users/{user_id}")
+async def update_user(user_id: str, payload: UserUpdate, principal: Principal = Depends(require_admin)):
+    with get_session() as db:
+        try:
+            rec = db_update_user(db, user_id, name=payload.name, email=payload.email)
+        except IntegrityError:
+            raise HTTPException(status_code=409, detail="Email already exists")
+        if not rec:
+            raise HTTPException(status_code=404, detail="User not found")
+        db_audit(db, principal.key_id, "UPDATE_USER", user_id, {k: v for k, v in payload.dict().items() if v is not None})
         return rec
 
 
