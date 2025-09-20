@@ -4,6 +4,20 @@ const GATEWAY_URL =
   process.env.GATEWAY_URL ||
   "http://localhost:8080"
 
+import type {
+  ApiKey,
+  CreateKeyRequest,
+  CreateKeyResponse,
+  Paginated,
+  RequestLog,
+  SortDir,
+  UsageData,
+  User,
+  UserDetail,
+  UpdateUser,
+  CreateUser,
+} from "@/lib/types"
+
 export class ApiClient {
   private apiKey: string | null = null
 
@@ -38,7 +52,7 @@ export class ApiClient {
   }
 
   // Users
-  async getUsers(params?: { page?: number; page_size?: number; sort_by?: string; sort_dir?: "asc" | "desc"; q?: string }) {
+  async getUsers(params?: { page?: number; page_size?: number; sort_by?: string; sort_dir?: SortDir; q?: string }): Promise<Paginated<User>> {
     const search = new URLSearchParams()
     if (params?.page) search.set("page", String(params.page))
     if (params?.page_size) search.set("page_size", String(params.page_size))
@@ -49,18 +63,18 @@ export class ApiClient {
     return this.request(`/admin/users${qs ? `?${qs}` : ""}`)
   }
 
-  async createUser(data: { name: string; email?: string }) {
+  async createUser(data: CreateUser): Promise<User> {
     return this.request("/admin/users", {
       method: "POST",
       body: JSON.stringify(data),
     })
   }
 
-  async getUser(userId: string) {
+  async getUser(userId: string): Promise<UserDetail> {
     return this.request(`/admin/users/${userId}`)
   }
 
-  async updateUser(userId: string, data: { name?: string; email?: string }) {
+  async updateUser(userId: string, data: UpdateUser): Promise<User> {
     return this.request(`/admin/users/${userId}`, {
       method: "PATCH",
       body: JSON.stringify(data),
@@ -72,10 +86,10 @@ export class ApiClient {
     page?: number
     page_size?: number
     sort_by?: string
-    sort_dir?: "asc" | "desc"
+    sort_dir?: SortDir
     status?: "active" | "revoked"
     q?: string
-  }) {
+  }): Promise<Paginated<ApiKey>> {
     const search = new URLSearchParams()
     if (params?.page) search.set("page", String(params.page))
     if (params?.page_size) search.set("page_size", String(params.page_size))
@@ -87,39 +101,33 @@ export class ApiClient {
     return this.request(`/admin/keys${qs ? `?${qs}` : ""}`)
   }
 
-  async createKey(data: {
-    user_id: string
-    name: string
-    role: string
-    monthly_quota_tokens?: number | null
-    daily_request_quota?: number | null
-  }) {
+  async createKey(data: CreateKeyRequest): Promise<CreateKeyResponse> {
     return this.request("/admin/keys", {
       method: "POST",
       body: JSON.stringify(data),
     })
   }
 
-  async revokeKey(keyId: string) {
+  async revokeKey(keyId: string): Promise<ApiKey> {
     return this.request(`/admin/keys/${keyId}/revoke`, {
       method: "POST",
     })
   }
 
-  async rotateKey(keyId: string) {
+  async rotateKey(keyId: string): Promise<CreateKeyResponse> {
     return this.request(`/admin/keys/${keyId}/rotate`, {
       method: "POST",
     })
   }
 
   // Usage
-  async getUsage(params: { from: string; to: string; key_id?: string }) {
+  async getUsage(params: { from: string; to: string; key_id?: string }): Promise<UsageData> {
     const searchParams = new URLSearchParams(params)
     return this.request(`/admin/usage?${searchParams}`)
   }
 
   // Requests
-  async getRequests() {
+  async getRequests(): Promise<RequestLog[] | RequestLog> {
     return this.request("/admin/requests")
   }
 }

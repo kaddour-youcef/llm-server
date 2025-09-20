@@ -13,7 +13,7 @@ from ..db import (
     audit as db_audit,
 )
 from ..db import get_user as db_get_user, update_user as db_update_user, list_keys_for_user as db_list_keys_for_user
-from ..schemas import UserCreate, KeyCreate, UserUpdate
+from ..types import UserCreate, KeyCreate, UserUpdate
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import text
 from datetime import date, timedelta

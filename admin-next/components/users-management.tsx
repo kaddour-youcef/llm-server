@@ -7,16 +7,10 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { RefreshCw, Plus, Users, AlertCircleIcon, CheckCircle2Icon } from "lucide-react"
 import { apiClient } from "@/lib/api"
 import Link from "next/link"
+import type { User } from "@/lib/types"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { CreateUserModal } from "./modals/create-user-modal"
-
-interface User {
-  id: string
-  name: string
-  email?: string
-  created_at?: string
-}
 
 export function UsersManagement() {
   const [users, setUsers] = useState<User[]>([])

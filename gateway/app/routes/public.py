@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from starlette.responses import StreamingResponse, JSONResponse
 from ..auth import require_key, Principal
-from ..schemas import ChatCompletionRequest
+from ..types import ChatCompletionRequest
 from ..ratelimit import check_rate_limit
 from ..queue import enqueue_job
 from ..accounting import record_request

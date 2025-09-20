@@ -18,22 +18,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { RefreshCw, FileText, Eye, Clock, User, Key } from "lucide-react"
 import { format } from "date-fns"
 import { apiClient } from "@/lib/api"
-
-interface RequestLog {
-  id?: string
-  timestamp?: string
-  method?: string
-  endpoint?: string
-  status_code?: number
-  response_time_ms?: number
-  user_id?: string
-  key_id?: string
-  tokens_used?: number
-  error_message?: string
-  request_body?: string
-  response_body?: string
-}
-
+import type { RequestLog } from "@/lib/types"
 export function RequestLogs() {
   const [requests, setRequests] = useState<RequestLog[]>([])
   const [loading, setLoading] = useState(false)

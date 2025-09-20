@@ -20,13 +20,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { apiClient } from "@/lib/api"
-
-interface User {
-  id: string
-  email: string
-  name: string
-  created_at: string
-}
+import type { User } from "@/lib/types"
 
 interface CreateKeyModalProps {
   open: boolean

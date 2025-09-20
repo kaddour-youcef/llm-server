@@ -13,26 +13,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ArrowLeft, RefreshCw, RotateCcw, Trash2, Key as KeyIcon, CheckCircle2Icon, AlertCircleIcon } from "lucide-react"
-
-interface ApiKey {
-  id: string
-  user_id: string
-  name: string
-  role: string
-  status: string
-  last4: string
-  created_at?: string
-  monthly_quota_tokens?: number | null
-  daily_request_quota?: number | null
-}
-
-interface UserDetail {
-  id: string
-  name: string
-  email?: string
-  created_at?: string
-  keys: ApiKey[]
-}
+import type { ApiKey, UserDetail } from "@/lib/types"
 
 export default function UserDetailPage() {
   const params = useParams<{ id: string }>()
@@ -294,4 +275,3 @@ export default function UserDetailPage() {
     </AuthGuard>
   )
 }
-

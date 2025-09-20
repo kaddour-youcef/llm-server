@@ -11,18 +11,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { CalendarIcon, BarChart3, Activity, Zap } from "lucide-react"
 import { format, subDays } from "date-fns"
 import { apiClient } from "@/lib/api"
-
-interface UsageData {
-  totals: {
-    total_tokens: number
-    request_count: number
-  }
-  timeseries: Array<{
-    day: string
-    total_tokens: number
-    request_count: number
-  }>
-}
+import type { UsageData } from "@/lib/types"
 
 export function UsageAnalytics() {
   const [usageData, setUsageData] = useState<UsageData | null>(null)

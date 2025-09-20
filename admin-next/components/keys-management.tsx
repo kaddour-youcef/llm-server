@@ -18,18 +18,7 @@ import { RefreshCw, Plus, Copy, RotateCcw, Trash2, Eye, EyeOff, Key, AlertCircle
 import { apiClient } from "@/lib/api"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { CreateKeyModal } from "./modals/create-key-modal"
-
-interface ApiKey {
-  id: string
-  name: string
-  user_id: string
-  role: string
-  monthly_quota_tokens?: number | null
-  daily_request_quota?: number | null
-  created_at?: string
-  status: string
-}
-
+import type { ApiKey } from "@/lib/types"
 export function KeysManagement() {
   const [keys, setKeys] = useState<ApiKey[]>([])
   const [loading, setLoading] = useState(false)
