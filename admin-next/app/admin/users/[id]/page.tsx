@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { AuthGuard } from "@/components/auth-guard"
 import { apiClient } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -140,11 +139,10 @@ export default function UserDetailPage() {
   }
 
   return (
-    <AuthGuard>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" onClick={() => router.push("/")}
+            <Button variant="ghost" onClick={() => router.push("/admin/users")}
               className="p-2" aria-label="Back to dashboard">
               <ArrowLeft className="h-5 w-5" />
             </Button>
@@ -301,6 +299,5 @@ export default function UserDetailPage() {
           </CardContent>
         </Card>
       </div>
-    </AuthGuard>
   )
 }

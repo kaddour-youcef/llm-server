@@ -1,13 +1,5 @@
-"use client"
-
-import { AuthGuard } from "@/components/auth-guard"
-import { Dashboard } from "@/components/dashboard"
+import { redirect } from "next/navigation"
 
 export default function AdminHomePage() {
-  return (
-    <AuthGuard>
-      <Dashboard />
-    </AuthGuard>
-  )
+  redirect("/admin/users")
 }
-

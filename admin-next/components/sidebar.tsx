@@ -1,5 +1,7 @@
 "use client"
 
+import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { LogOut, Users, Key, BarChart3, FileText } from "lucide-react"
@@ -18,26 +20,20 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 
-type ActiveSection = "users" | "keys" | "usage" | "requests"
-
-interface AppSidebarProps {
-  activeSection: ActiveSection
-  onSectionChange: (section: ActiveSection) => void
-}
-
-export function AppSidebar({ activeSection, onSectionChange }: AppSidebarProps) {
+export function AppSidebar() {
   const { logout } = useAuthStore()
+  const pathname = usePathname()
 
   const navigationItems = [
-    { id: "users" as const, label: "Users", icon: Users },
-    { id: "keys" as const, label: "API Keys", icon: Key },
-    { id: "usage" as const, label: "Usage Analytics", icon: BarChart3 },
-    { id: "requests" as const, label: "Request Logs", icon: FileText },
+    { href: "/admin/users", label: "Users", icon: Users },
+    { href: "/admin/keys", label: "API Keys", icon: Key },
+    { href: "/admin/usage", label: "Usage Analytics", icon: BarChart3 },
+    { href: "/admin/requests", label: "Request Logs", icon: FileText },
   ]
 
   return (
     <Sidebar variant="sidebar" collapsible="icon">
-      <SidebarHeader >
+      <SidebarHeader>
         <div className="flex flex-col gap-2 px-2 py-2">
           <h1 className="text-lg font-bold group-data-[collapsible=icon]:hidden">API Management</h1>
           <p className="text-sm text-muted-foreground group-data-[collapsible=icon]:hidden">Admin Dashboard</p>
@@ -50,7 +46,6 @@ export function AppSidebar({ activeSection, onSectionChange }: AppSidebarProps) 
         </div>
       </SidebarHeader>
 
-
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Navigation</SidebarGroupLabel>
@@ -58,16 +53,14 @@ export function AppSidebar({ activeSection, onSectionChange }: AppSidebarProps) 
             <SidebarMenu>
               {navigationItems.map((item) => {
                 const Icon = item.icon
-                const isActive = activeSection === item.id
+                const isActive = pathname?.startsWith(item.href)
                 return (
-                  <SidebarMenuItem key={item.id}>
-                    <SidebarMenuButton
-                      onClick={() => onSectionChange(item.id)}
-                      isActive={isActive}
-                      tooltip={item.label}
-                    >
-                      <Icon className="h-4 w-4" />
-                      <span>{item.label}</span>
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton asChild isActive={!!isActive} tooltip={item.label}>
+                      <Link href={item.href}>
+                        <Icon className="h-4 w-4" />
+                        <span>{item.label}</span>
+                      </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 )
@@ -76,7 +69,6 @@ export function AppSidebar({ activeSection, onSectionChange }: AppSidebarProps) 
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-
 
       <SidebarFooter>
         <div className="flex flex-col gap-2 p-2">
