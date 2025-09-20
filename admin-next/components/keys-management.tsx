@@ -53,10 +53,8 @@ export function KeysManagement() {
         status: statusFilter === "all" ? undefined : statusFilter,
         q: debouncedQuery || undefined,
       })
-      const items = Array.isArray((data as any)?.items) ? (data as any).items : Array.isArray(data) ? data : []
-      const totalCount = typeof (data as any)?.total === "number" ? (data as any).total : items.length
-      setKeys(items)
-      setTotal(totalCount)
+      setKeys(data.items)
+      setTotal(data.total)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch keys")
     } finally {
@@ -152,7 +150,7 @@ export function KeysManagement() {
         </div>
         <div className="flex items-center gap-2 text-sm">
           <span>Status</span>
-          <Select value={statusFilter} onValueChange={(v: any) => { setStatusFilter(v); setPage(1) }}>
+          <Select value={statusFilter} onValueChange={(v: "all" | "active" | "revoked") => { setStatusFilter(v); setPage(1) }}>
             <SelectTrigger className="h-8 w-[130px]"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All</SelectItem>
@@ -163,7 +161,7 @@ export function KeysManagement() {
         </div>
         <div className="flex items-center gap-2 text-sm">
           <span>Sort by</span>
-          <Select value={sortBy} onValueChange={(v: any) => { setSortBy(v); setPage(1) }}>
+          <Select value={sortBy} onValueChange={(v: "created_at" | "name" | "user_id" | "role" | "status") => { setSortBy(v); setPage(1) }}>
             <SelectTrigger className="h-8 w-[150px]"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="created_at">Created</SelectItem>
@@ -173,7 +171,7 @@ export function KeysManagement() {
               <SelectItem value="status">Status</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={sortDir} onValueChange={(v: any) => { setSortDir(v); setPage(1) }}>
+          <Select value={sortDir} onValueChange={(v: "asc" | "desc") => { setSortDir(v); setPage(1) }}>
             <SelectTrigger className="h-8 w-[110px]"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="asc">Asc</SelectItem>

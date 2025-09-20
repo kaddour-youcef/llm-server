@@ -41,9 +41,9 @@ export default function UserDetailPage() {
     setError("")
     try {
       const data = await apiClient.getUser(userId)
-      setUser(data as UserDetail)
-      setEditName((data as any)?.name || "")
-      setEditEmail((data as any)?.email || "")
+      setUser(data)
+      setEditName(data.name || "")
+      setEditEmail(data.email || "")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch user")
     } finally {
@@ -85,7 +85,7 @@ export default function UserDetailPage() {
         daily_request_quota: newDailyQuota ? Number.parseInt(newDailyQuota) : undefined,
       })
       setSuccess("API key created successfully")
-      setNewPlaintextKey((res as any)?.plaintext_key || null)
+      setNewPlaintextKey(res.plaintext_key ?? null)
       setNewKeyName("")
       setNewMonthlyQuota("")
       setNewDailyQuota("")
@@ -102,7 +102,7 @@ export default function UserDetailPage() {
     try {
       const res = await apiClient.rotateKey(keyId)
       setSuccess("Key rotated. Copy the new plaintext now.")
-      setNewPlaintextKey((res as any)?.plaintext_key || null)
+      setNewPlaintextKey(res.plaintext_key ?? null)
       fetchUser()
       setTimeout(() => setSuccess(""), 4000)
     } catch (err) {
@@ -243,7 +243,7 @@ export default function UserDetailPage() {
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="newKeyRole">Role</Label>
-                  <Select value={newKeyRole} onValueChange={(v: any) => setNewKeyRole(v)}>
+                  <Select value={newKeyRole} onValueChange={(v: "user" | "admin") => setNewKeyRole(v)}>
                     <SelectTrigger id="newKeyRole"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="user">User</SelectItem>

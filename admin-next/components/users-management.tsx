@@ -36,10 +36,8 @@ export function UsersManagement() {
     setError("")
     try {
       const data = await apiClient.getUsers({ page, page_size: pageSize, sort_by: sortBy, sort_dir: sortDir, q: debouncedQuery || undefined })
-      const items = Array.isArray((data as any)?.items) ? (data as any).items : Array.isArray(data) ? data : []
-      const totalCount = typeof (data as any)?.total === "number" ? (data as any).total : items.length
-      setUsers(items)
-      setTotal(totalCount)
+      setUsers(data.items)
+      setTotal(data.total)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch users")
     } finally {
@@ -97,7 +95,7 @@ export function UsersManagement() {
         </div>
         <div className="flex items-center gap-2 text-sm">
           <span>Sort by</span>
-          <Select value={sortBy} onValueChange={(v: any) => { setSortBy(v); setPage(1) }}>
+          <Select value={sortBy} onValueChange={(v: "created_at" | "name" | "email") => { setSortBy(v); setPage(1) }}>
             <SelectTrigger className="h-8 w-[140px]"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="created_at">Created</SelectItem>
@@ -105,7 +103,7 @@ export function UsersManagement() {
               <SelectItem value="email">Email</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={sortDir} onValueChange={(v: any) => { setSortDir(v); setPage(1) }}>
+          <Select value={sortDir} onValueChange={(v: "asc" | "desc") => { setSortDir(v); setPage(1) }}>
             <SelectTrigger className="h-8 w-[110px]"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="asc">Asc</SelectItem>
