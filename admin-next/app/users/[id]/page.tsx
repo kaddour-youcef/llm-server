@@ -14,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ArrowLeft, RefreshCw, RotateCcw, Trash2, Key as KeyIcon, CheckCircle2Icon, AlertCircleIcon } from "lucide-react"
 import type { ApiKey, UserDetail } from "@/lib/types"
+import { CreateKeyInlineFormSchema, UpdateUserFormSchema, formatZodError } from "@/lib/validation"
 
 export default function UserDetailPage() {
   const params = useParams<{ id: string }>()
@@ -61,7 +62,12 @@ export default function UserDetailPage() {
     if (!userId) return
     setError("")
     try {
-      await apiClient.updateUser(userId, { name: editName.trim() || undefined, email: editEmail.trim() || undefined })
+      const parsed = UpdateUserFormSchema.safeParse({ name: editName, email: editEmail })
+      if (!parsed.success) {
+        setError(formatZodError(parsed.error))
+        return
+      }
+      await apiClient.updateUser(userId, parsed.data)
       setSuccess("User updated successfully")
       fetchUser()
       setTimeout(() => setSuccess(""), 3000)
@@ -77,12 +83,22 @@ export default function UserDetailPage() {
     setError("")
     setNewPlaintextKey(null)
     try {
+      const parsed = CreateKeyInlineFormSchema.safeParse({
+        name: newKeyName,
+        role: newKeyRole,
+        monthlyQuota: newMonthlyQuota,
+        dailyQuota: newDailyQuota,
+      })
+      if (!parsed.success) {
+        setError(formatZodError(parsed.error))
+        return
+      }
       const res = await apiClient.createKey({
         user_id: userId,
-        name: newKeyName.trim(),
-        role: newKeyRole,
-        monthly_quota_tokens: newMonthlyQuota ? Number.parseInt(newMonthlyQuota) : undefined,
-        daily_request_quota: newDailyQuota ? Number.parseInt(newDailyQuota) : undefined,
+        name: parsed.data.name,
+        role: parsed.data.role,
+        monthly_quota_tokens: parsed.data.monthlyQuota,
+        daily_request_quota: parsed.data.dailyQuota,
       })
       setSuccess("API key created successfully")
       setNewPlaintextKey(res.plaintext_key ?? null)

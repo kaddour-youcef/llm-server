@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog"
 import { apiClient } from "@/lib/api"
 import type { User } from "@/lib/types"
+import { CreateKeyFormSchema, formatZodError } from "@/lib/validation"
 
 interface CreateKeyModalProps {
   open: boolean
@@ -68,20 +69,22 @@ export function CreateKeyModal({ open, onOpenChange, onSuccess }: CreateKeyModal
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!formData.user_id.trim()) {
-      setError("User selection is required")
+    // Zod validation
+    const parsed = CreateKeyFormSchema.safeParse(formData)
+    if (!parsed.success) {
+      setError(formatZodError(parsed.error))
       return
     }
-  
+
     setCreating(true)
     setError("")
     try {
       const res = await apiClient.createKey({
-        name: formData.name,
-        user_id: formData.user_id,
-        role: formData.role,
-        monthly_quota_tokens: formData.monthlyQuota ? Number.parseInt(formData.monthlyQuota) : undefined,
-        daily_request_quota: formData.dailyQuota ? Number.parseInt(formData.dailyQuota) : undefined,
+        name: parsed.data.name,
+        user_id: parsed.data.user_id,
+        role: parsed.data.role,
+        monthly_quota_tokens: parsed.data.monthlyQuota,
+        daily_request_quota: parsed.data.dailyQuota,
       })
   
       setFormData({

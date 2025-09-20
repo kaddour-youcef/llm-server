@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { apiClient } from "@/lib/api"
+import { CreateUserFormSchema, formatZodError } from "@/lib/validation"
 
 interface CreateUserModalProps {
   open: boolean
@@ -29,18 +30,17 @@ export function CreateUserModal({ open, onOpenChange, onSuccess }: CreateUserMod
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!formData.name.trim()) {
-      setError("Name is required")
+    // Zod validation
+    const parsed = CreateUserFormSchema.safeParse(formData)
+    if (!parsed.success) {
+      setError(formatZodError(parsed.error))
       return
     }
 
     setCreating(true)
     setError("")
     try {
-      await apiClient.createUser({
-        name: formData.name,
-        email: formData.email || undefined,
-      })
+      await apiClient.createUser(parsed.data)
       setFormData({ name: "", email: "" })
       onSuccess()
       onOpenChange(false)
