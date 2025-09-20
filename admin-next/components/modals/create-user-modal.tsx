@@ -45,25 +45,7 @@ export function CreateUserModal({ open, onOpenChange, onSuccess }: CreateUserMod
       onSuccess()
       onOpenChange(false)
     } catch (err) {
-      let message = "Failed to create user"
-    
-      // If your apiClient throws { response: { data } } like Axios
-      if (err?.response?.data) {
-        const data = err.response.data
-        if (typeof data === "object") {
-          message = data.detail || data.error || data.message || message
-        }
-      }
-      // If your apiClient just throws an Error with JSON inside message
-      else if (err instanceof Error) {
-        try {
-          const parsed = JSON.parse(err.message)
-          message = parsed.detail || parsed.error || parsed.message || err.message
-        } catch {
-          message = err.message
-        }
-      }
-    
+      const message = err instanceof Error ? err.message : "Failed to create user"
       setError(message)
     }
      finally {

@@ -39,8 +39,21 @@ export class ApiClient {
     })
 
     if (!response.ok) {
-      const error = await response.text()
-      throw new Error(error || `HTTP ${response.status}`)
+      // Try to parse JSON error bodies from FastAPI and surface useful detail/message
+      let message = `HTTP ${response.status}`
+      try {
+        const contentType = response.headers.get("content-type") || ""
+        if (contentType.includes("application/json")) {
+          const data = await response.json()
+          message = data?.detail || data?.error || data?.message || message
+        } else {
+          const text = await response.text()
+          message = text || message
+        }
+      } catch {
+        // ignore parse errors; keep default message
+      }
+      throw new Error(message)
     }
 
     return response.json()
