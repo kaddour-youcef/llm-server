@@ -44,6 +44,13 @@ export function KeysManagement() {
   const [sortBy, setSortBy] = useState<"created_at" | "name" | "user_id" | "role" | "status">("created_at")
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc")
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "revoked">("all")
+  const [query, setQuery] = useState("")
+  const [debouncedQuery, setDebouncedQuery] = useState("")
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(query.trim()), 300)
+    return () => clearTimeout(t)
+  }, [query])
 
   const fetchKeys = async () => {
     setLoading(true)
@@ -55,6 +62,7 @@ export function KeysManagement() {
         sort_by: sortBy,
         sort_dir: sortDir,
         status: statusFilter === "all" ? undefined : statusFilter,
+        q: debouncedQuery || undefined,
       })
       const items = Array.isArray((data as any)?.items) ? (data as any).items : Array.isArray(data) ? data : []
       const totalCount = typeof (data as any)?.total === "number" ? (data as any).total : items.length
@@ -111,7 +119,7 @@ export function KeysManagement() {
   useEffect(() => {
     fetchKeys()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, pageSize, sortBy, sortDir, statusFilter])
+  }, [page, pageSize, sortBy, sortDir, statusFilter, debouncedQuery])
 
   useEffect(() => {
     if (createModalOpen) {
@@ -145,6 +153,14 @@ export function KeysManagement() {
       </div>
 
       <div className="flex items-center gap-4 flex-wrap">
+        <div className="w-full sm:w-auto">
+          <Input
+            placeholder="Search keys by name, last4, role, or user id..."
+            value={query}
+            onChange={(e) => { setQuery(e.target.value); setPage(1) }}
+            className="h-9 w-full sm:w-[360px]"
+          />
+        </div>
         <div className="flex items-center gap-2 text-sm">
           <span>Status</span>
           <Select value={statusFilter} onValueChange={(v: any) => { setStatusFilter(v); setPage(1) }}>

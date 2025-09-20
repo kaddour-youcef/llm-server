@@ -6,7 +6,7 @@ from .models import User, APIKey, Audit
 from .security import hash_key
 import secrets
 from typing import Optional, List, Dict, Any, Tuple
-from sqlalchemy import asc, desc
+from sqlalchemy import asc, desc, or_, cast, String
 import uuid
 
 
@@ -43,6 +43,7 @@ def list_users(
     page_size: Optional[int] = None,
     sort_by: Optional[str] = None,
     sort_dir: Optional[str] = None,
+    q: Optional[str] = None,
 ) -> Tuple[List[Dict[str, Any]], int]:
     sort_fields = {
         "name": User.name,
@@ -51,7 +52,11 @@ def list_users(
     }
     sort_col = sort_fields.get((sort_by or "created_at").lower(), User.created_at)
     direction = desc if (sort_dir or "desc").lower() == "desc" else asc
-    query = db.query(User).order_by(direction(sort_col))
+    query = db.query(User)
+    if q:
+        like = f"%{q}%"
+        query = query.filter(or_(User.name.ilike(like), User.email.ilike(like)))
+    query = query.order_by(direction(sort_col))
     total = query.count()
 
     if page and page_size:
@@ -117,6 +122,7 @@ def list_keys(
     sort_by: Optional[str] = None,
     sort_dir: Optional[str] = None,
     status: Optional[str] = None,
+    q: Optional[str] = None,
 ) -> Tuple[List[Dict[str, Any]], int]:
     sort_fields = {
         "name": APIKey.name,
@@ -130,6 +136,16 @@ def list_keys(
     query = db.query(APIKey)
     if status and status.lower() in {"active", "revoked"}:
         query = query.filter(APIKey.status == status.lower())
+    if q:
+        like = f"%{q}%"
+        query = query.filter(
+            or_(
+                APIKey.name.ilike(like),
+                APIKey.key_last4.ilike(like),
+                APIKey.role.ilike(like),
+                cast(APIKey.user_id, String).ilike(like),
+            )
+        )
     query = query.order_by(direction(sort_col))
     total = query.count()
 

@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { RefreshCw, Plus, Users, AlertCircleIcon, CheckCircle2Icon } from "lucide-react"
 import { apiClient } from "@/lib/api"
+import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { CreateUserModal } from "./modals/create-user-modal"
 
@@ -27,12 +28,19 @@ export function UsersManagement() {
   const [total, setTotal] = useState(0)
   const [sortBy, setSortBy] = useState<"created_at" | "name" | "email">("created_at")
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc")
+  const [query, setQuery] = useState("")
+  const [debouncedQuery, setDebouncedQuery] = useState("")
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(query.trim()), 300)
+    return () => clearTimeout(t)
+  }, [query])
 
   const fetchUsers = async () => {
     setLoading(true)
     setError("")
     try {
-      const data = await apiClient.getUsers({ page, page_size: pageSize, sort_by: sortBy, sort_dir: sortDir })
+      const data = await apiClient.getUsers({ page, page_size: pageSize, sort_by: sortBy, sort_dir: sortDir, q: debouncedQuery || undefined })
       const items = Array.isArray((data as any)?.items) ? (data as any).items : Array.isArray(data) ? data : []
       const totalCount = typeof (data as any)?.total === "number" ? (data as any).total : items.length
       setUsers(items)
@@ -53,7 +61,7 @@ export function UsersManagement() {
   useEffect(() => {
     fetchUsers()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, pageSize, sortBy, sortDir])
+  }, [page, pageSize, sortBy, sortDir, debouncedQuery])
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
   const canPrev = page > 1
@@ -83,7 +91,15 @@ export function UsersManagement() {
         </div>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 flex-wrap">
+        <div className="w-full sm:w-auto">
+          <Input
+            placeholder="Search users by name or email..."
+            value={query}
+            onChange={(e) => { setQuery(e.target.value); setPage(1) }}
+            className="h-9 w-full sm:w-[300px]"
+          />
+        </div>
         <div className="flex items-center gap-2 text-sm">
           <span>Sort by</span>
           <Select value={sortBy} onValueChange={(v: any) => { setSortBy(v); setPage(1) }}>

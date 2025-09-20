@@ -19,9 +19,10 @@ async def list_users(
     page_size: int | None = Query(default=25, ge=1, le=200, description="Items per page"),
     sort_by: str | None = Query(default="created_at", description="Sort field: name|email|created_at"),
     sort_dir: str | None = Query(default="desc", description="Sort direction: asc|desc"),
+    q: str | None = Query(default=None, description="Search users by name or email"),
 ):
     with get_session() as db:
-        items, total = db_list_users(db, page=page, page_size=page_size, sort_by=sort_by, sort_dir=sort_dir)
+        items, total = db_list_users(db, page=page, page_size=page_size, sort_by=sort_by, sort_dir=sort_dir, q=q)
         return {
             "items": items,
             "page": page,
@@ -50,6 +51,7 @@ async def list_keys(
     sort_by: str | None = Query(default="created_at", description="Sort field: name|user_id|role|status|created_at"),
     sort_dir: str | None = Query(default="desc", description="Sort direction: asc|desc"),
     status: str | None = Query(default=None, description="Filter by status: active|revoked"),
+    q: str | None = Query(default=None, description="Search keys by name, last4, role, or user_id"),
 ):
     with get_session() as db:
         items, total = db_list_keys(
@@ -59,6 +61,7 @@ async def list_keys(
             sort_by=sort_by,
             sort_dir=sort_dir,
             status=status,
+            q=q,
         )
         return {
             "items": items,
