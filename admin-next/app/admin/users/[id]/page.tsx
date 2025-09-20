@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, RefreshCw, RotateCcw, Trash2, Key as KeyIcon, CheckCircle2Icon, AlertCircleIcon } from "lucide-react"
 import type { ApiKey, UserDetail } from "@/lib/types"
 import { CreateKeyInlineFormSchema, UpdateUserFormSchema, formatZodError } from "@/lib/validation"
+import { useBreadcrumbsStore } from "@/lib/breadcrumbs-store"
 
 export default function UserDetailPage() {
   const params = useParams<{ id: string }>()
@@ -35,6 +36,7 @@ export default function UserDetailPage() {
   const [newMonthlyQuota, setNewMonthlyQuota] = useState("")
   const [newDailyQuota, setNewDailyQuota] = useState("")
   const [newPlaintextKey, setNewPlaintextKey] = useState<string | null>(null)
+  const { setExtras, clear } = useBreadcrumbsStore()
 
   const fetchUser = async () => {
     if (!userId) return
@@ -57,6 +59,13 @@ export default function UserDetailPage() {
     fetchUser()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId])
+
+  // Update breadcrumbs with user details
+  useEffect(() => {
+    const label = user?.name || user?.email || (userId as string) || "User"
+    setExtras([{ label }])
+    return () => clear()
+  }, [user?.name, user?.email, userId, setExtras, clear])
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault()
