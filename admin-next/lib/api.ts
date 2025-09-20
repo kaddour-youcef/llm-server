@@ -38,10 +38,12 @@ export class ApiClient {
   }
 
   // Users
-  async getUsers(params?: { page?: number; page_size?: number }) {
+  async getUsers(params?: { page?: number; page_size?: number; sort_by?: string; sort_dir?: "asc" | "desc" }) {
     const search = new URLSearchParams()
     if (params?.page) search.set("page", String(params.page))
     if (params?.page_size) search.set("page_size", String(params.page_size))
+    if (params?.sort_by) search.set("sort_by", params.sort_by)
+    if (params?.sort_dir) search.set("sort_dir", params.sort_dir)
     const qs = search.toString()
     return this.request(`/admin/users${qs ? `?${qs}` : ""}`)
   }
@@ -54,10 +56,19 @@ export class ApiClient {
   }
 
   // API Keys
-  async getKeys(params?: { page?: number; page_size?: number }) {
+  async getKeys(params?: {
+    page?: number
+    page_size?: number
+    sort_by?: string
+    sort_dir?: "asc" | "desc"
+    status?: "active" | "revoked"
+  }) {
     const search = new URLSearchParams()
     if (params?.page) search.set("page", String(params.page))
     if (params?.page_size) search.set("page_size", String(params.page_size))
+    if (params?.sort_by) search.set("sort_by", params.sort_by)
+    if (params?.sort_dir) search.set("sort_dir", params.sort_dir)
+    if (params?.status) search.set("status", params.status)
     const qs = search.toString()
     return this.request(`/admin/keys${qs ? `?${qs}` : ""}`)
   }

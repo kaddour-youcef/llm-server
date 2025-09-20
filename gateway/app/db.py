@@ -6,6 +6,7 @@ from .models import User, APIKey, Audit
 from .security import hash_key
 import secrets
 from typing import Optional, List, Dict, Any, Tuple
+from sqlalchemy import asc, desc
 import uuid
 
 
@@ -40,8 +41,17 @@ def list_users(
     db: Session,
     page: Optional[int] = None,
     page_size: Optional[int] = None,
+    sort_by: Optional[str] = None,
+    sort_dir: Optional[str] = None,
 ) -> Tuple[List[Dict[str, Any]], int]:
-    query = db.query(User).order_by(User.created_at.desc())
+    sort_fields = {
+        "name": User.name,
+        "email": User.email,
+        "created_at": User.created_at,
+    }
+    sort_col = sort_fields.get((sort_by or "created_at").lower(), User.created_at)
+    direction = desc if (sort_dir or "desc").lower() == "desc" else asc
+    query = db.query(User).order_by(direction(sort_col))
     total = query.count()
 
     if page and page_size:
@@ -104,8 +114,23 @@ def list_keys(
     db: Session,
     page: Optional[int] = None,
     page_size: Optional[int] = None,
+    sort_by: Optional[str] = None,
+    sort_dir: Optional[str] = None,
+    status: Optional[str] = None,
 ) -> Tuple[List[Dict[str, Any]], int]:
-    query = db.query(APIKey).order_by(APIKey.created_at.desc())
+    sort_fields = {
+        "name": APIKey.name,
+        "user_id": APIKey.user_id,
+        "role": APIKey.role,
+        "status": APIKey.status,
+        "created_at": APIKey.created_at,
+    }
+    sort_col = sort_fields.get((sort_by or "created_at").lower(), APIKey.created_at)
+    direction = desc if (sort_dir or "desc").lower() == "desc" else asc
+    query = db.query(APIKey)
+    if status and status.lower() in {"active", "revoked"}:
+        query = query.filter(APIKey.status == status.lower())
+    query = query.order_by(direction(sort_col))
     total = query.count()
 
     if page and page_size:

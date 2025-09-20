@@ -25,12 +25,14 @@ export function UsersManagement() {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(25)
   const [total, setTotal] = useState(0)
+  const [sortBy, setSortBy] = useState<"created_at" | "name" | "email">("created_at")
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc")
 
   const fetchUsers = async () => {
     setLoading(true)
     setError("")
     try {
-      const data = await apiClient.getUsers({ page, page_size: pageSize })
+      const data = await apiClient.getUsers({ page, page_size: pageSize, sort_by: sortBy, sort_dir: sortDir })
       const items = Array.isArray((data as any)?.items) ? (data as any).items : Array.isArray(data) ? data : []
       const totalCount = typeof (data as any)?.total === "number" ? (data as any).total : items.length
       setUsers(items)
@@ -51,7 +53,7 @@ export function UsersManagement() {
   useEffect(() => {
     fetchUsers()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, pageSize])
+  }, [page, pageSize, sortBy, sortDir])
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
   const canPrev = page > 1
@@ -78,6 +80,27 @@ export function UsersManagement() {
             <Plus className="h-4 w-4" />
             Add User
           </Button>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 text-sm">
+          <span>Sort by</span>
+          <Select value={sortBy} onValueChange={(v: any) => { setSortBy(v); setPage(1) }}>
+            <SelectTrigger className="h-8 w-[140px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="created_at">Created</SelectItem>
+              <SelectItem value="name">Name</SelectItem>
+              <SelectItem value="email">Email</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={sortDir} onValueChange={(v: any) => { setSortDir(v); setPage(1) }}>
+            <SelectTrigger className="h-8 w-[110px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="asc">Asc</SelectItem>
+              <SelectItem value="desc">Desc</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

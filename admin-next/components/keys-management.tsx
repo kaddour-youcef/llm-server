@@ -41,12 +41,21 @@ export function KeysManagement() {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(25)
   const [total, setTotal] = useState(0)
+  const [sortBy, setSortBy] = useState<"created_at" | "name" | "user_id" | "role" | "status">("created_at")
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc")
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "revoked">("all")
 
   const fetchKeys = async () => {
     setLoading(true)
     setError("")
     try {
-      const data = await apiClient.getKeys({ page, page_size: pageSize })
+      const data = await apiClient.getKeys({
+        page,
+        page_size: pageSize,
+        sort_by: sortBy,
+        sort_dir: sortDir,
+        status: statusFilter === "all" ? undefined : statusFilter,
+      })
       const items = Array.isArray((data as any)?.items) ? (data as any).items : Array.isArray(data) ? data : []
       const totalCount = typeof (data as any)?.total === "number" ? (data as any).total : items.length
       setKeys(items)
@@ -102,7 +111,7 @@ export function KeysManagement() {
   useEffect(() => {
     fetchKeys()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, pageSize])
+  }, [page, pageSize, sortBy, sortDir, statusFilter])
 
   useEffect(() => {
     if (createModalOpen) {
@@ -132,6 +141,40 @@ export function KeysManagement() {
             <Plus className="h-4 w-4" />
             Create Key
           </Button>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-4 flex-wrap">
+        <div className="flex items-center gap-2 text-sm">
+          <span>Status</span>
+          <Select value={statusFilter} onValueChange={(v: any) => { setStatusFilter(v); setPage(1) }}>
+            <SelectTrigger className="h-8 w-[130px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="revoked">Revoked</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center gap-2 text-sm">
+          <span>Sort by</span>
+          <Select value={sortBy} onValueChange={(v: any) => { setSortBy(v); setPage(1) }}>
+            <SelectTrigger className="h-8 w-[150px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="created_at">Created</SelectItem>
+              <SelectItem value="name">Name</SelectItem>
+              <SelectItem value="user_id">User ID</SelectItem>
+              <SelectItem value="role">Role</SelectItem>
+              <SelectItem value="status">Status</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={sortDir} onValueChange={(v: any) => { setSortDir(v); setPage(1) }}>
+            <SelectTrigger className="h-8 w-[110px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="asc">Asc</SelectItem>
+              <SelectItem value="desc">Desc</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
