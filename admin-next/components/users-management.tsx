@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { RefreshCw, Plus, Users } from "lucide-react"
+import { RefreshCw, Plus, Users, AlertCircleIcon, CheckCircle2Icon } from "lucide-react"
 import { apiClient } from "@/lib/api"
 import { CreateUserModal } from "./modals/create-user-modal"
 
@@ -69,17 +69,15 @@ export function UsersManagement() {
         </div>
       </div>
 
-      {success && (
-        <Alert>
-          <AlertDescription>{success}</AlertDescription>
-        </Alert>
-      )}
-
-      {error && (
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
+      {(error || success) && (
+          <Alert
+            variant={error ? "destructive" : "default"}
+            className={error ? "" : "border-green-500 text-green-700 [&_svg]:text-green-600"}
+          >
+            {error ? <AlertCircleIcon className="h-4 w-4" /> : <CheckCircle2Icon className="h-4 w-4" />}
+            <AlertDescription>{error || success}</AlertDescription>
+          </Alert>
+        )}
 
       <Card>
         <CardHeader>

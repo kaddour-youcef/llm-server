@@ -14,7 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { RefreshCw, Plus, Copy, RotateCcw, Trash2, Eye, EyeOff, Key } from "lucide-react"
+import { RefreshCw, Plus, Copy, RotateCcw, Trash2, Eye, EyeOff, Key, AlertCircleIcon, CheckCircle2Icon } from "lucide-react"
 import { apiClient } from "@/lib/api"
 import { CreateKeyModal } from "./modals/create-key-modal"
 
@@ -51,11 +51,17 @@ export function KeysManagement() {
     }
   }
 
-  const handleCreateSuccess = () => {
+  const handleCreateSuccess = (res?: { plaintext_key?: string }) => {
+    if (res?.plaintext_key) {
+      setNewKey(res.plaintext_key)
+      setShowNewKey(false) // dont show key right after creation
+    }
     setSuccess("API key created successfully")
     fetchKeys()
     setTimeout(() => setSuccess(""), 3000)
   }
+  
+  
 
   const revokeKey = async (keyId: string) => {
     try {
@@ -90,6 +96,13 @@ export function KeysManagement() {
     fetchKeys()
   }, [])
 
+  useEffect(() => {
+    if (createModalOpen) {
+      setNewKey("")
+      setShowNewKey(false)
+    }
+  }, [createModalOpen])
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -115,16 +128,21 @@ export function KeysManagement() {
       </div>
 
       {(error || success) && (
-        <Alert variant={error ? "destructive" : "default"}>
-          <AlertDescription>{error || success}</AlertDescription>
-        </Alert>
-      )}
+          <Alert
+            variant={error ? "destructive" : "default"}
+            className={error ? "" : "border-green-500 text-green-700 [&_svg]:text-green-600"}
+          >
+            {error ? <AlertCircleIcon className="h-4 w-4" /> : <CheckCircle2Icon className="h-4 w-4" />}
+            <AlertDescription>{error || success}</AlertDescription>
+          </Alert>
+        )}
+
 
       {/* New Key Display */}
       {newKey && (
-        <Card className="border-accent/20 bg-accent/5">
+        <Card className="border-green-500">
           <CardHeader>
-            <CardTitle className="text-accent">New API Key Created</CardTitle>
+            <CardTitle className="">New API Key Created</CardTitle>
             <CardDescription>Copy this key now - it will not be shown again</CardDescription>
           </CardHeader>
           <CardContent>
@@ -246,7 +264,13 @@ export function KeysManagement() {
         </CardContent>
       </Card>
 
-      <CreateKeyModal open={createModalOpen} onOpenChange={setCreateModalOpen} onSuccess={handleCreateSuccess} />
+      <CreateKeyModal
+        open={createModalOpen}
+        onOpenChange={setCreateModalOpen}
+        onSuccess={handleCreateSuccess}
+      />
+
+
     </div>
   )
 }

@@ -31,8 +31,9 @@ interface User {
 interface CreateKeyModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSuccess: () => void
+  onSuccess: (res?: { plaintext_key?: string }) => void
 }
+
 
 export function CreateKeyModal({ open, onOpenChange, onSuccess }: CreateKeyModalProps) {
   const [creating, setCreating] = useState(false)
@@ -77,17 +78,18 @@ export function CreateKeyModal({ open, onOpenChange, onSuccess }: CreateKeyModal
       setError("User selection is required")
       return
     }
-
+  
     setCreating(true)
     setError("")
     try {
-      await apiClient.createKey({
+      const res = await apiClient.createKey({
         name: formData.name,
         user_id: formData.user_id,
         role: formData.role,
         monthly_quota_tokens: formData.monthlyQuota ? Number.parseInt(formData.monthlyQuota) : undefined,
         daily_request_quota: formData.dailyQuota ? Number.parseInt(formData.dailyQuota) : undefined,
       })
+  
       setFormData({
         name: "",
         user_id: "",
@@ -95,14 +97,16 @@ export function CreateKeyModal({ open, onOpenChange, onSuccess }: CreateKeyModal
         monthlyQuota: "",
         dailyQuota: "",
       })
-      onSuccess()
-      onOpenChange(false)
+  
+      onSuccess(res)            // ✅ send the new plaintext_key up
+      onOpenChange(false)       // ✅ close the modal right after success
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create API key")
     } finally {
       setCreating(false)
     }
   }
+  
 
   const handleClose = () => {
     setFormData({
