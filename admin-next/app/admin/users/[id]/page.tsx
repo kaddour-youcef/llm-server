@@ -12,6 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ArrowLeft, RefreshCw, RotateCcw, Trash2, Key as KeyIcon, CheckCircle2Icon, AlertCircleIcon } from "lucide-react"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import type { ApiKey, UserDetail } from "@/lib/types"
 import { CreateKeyInlineFormSchema, UpdateUserFormSchema, formatZodError } from "@/lib/validation"
 import { useBreadcrumbsStore } from "@/lib/breadcrumbs-store"
@@ -251,12 +252,31 @@ export default function UserDetailPage() {
                         <TableCell>{k.status}</TableCell>
                         <TableCell className="text-sm text-muted-foreground">{k.created_at ? new Date(k.created_at).toLocaleDateString("en-GB") : "—"}</TableCell>
                         <TableCell className="flex gap-2">
-                          <Button size="sm" variant="outline" onClick={() => handleRotate(k.id)}>
-                            <RotateCcw className="h-4 w-4" /> Rotate
-                          </Button>
-                          <Button size="sm" variant="destructive" onClick={() => handleRevoke(k.id)}>
-                            <Trash2 className="h-4 w-4" /> Revoke
-                          </Button>
+                          {k.status === 'active' ? (
+                            <>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className=""
+                                    onClick={() => handleRotate(k.id)}
+                                  >
+                                    <RotateCcw className="h-4 w-4" /> Rotate
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent sideOffset={6}>Rotate key</TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button size="sm" variant="destructive" onClick={() => handleRevoke(k.id)}>
+                                    <Trash2 className="h-4 w-4" /> Revoke
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent sideOffset={6}>Revoke key</TooltipContent>
+                              </Tooltip>
+                            </>
+                          ) : null}
                         </TableCell>
                       </TableRow>
                     ))

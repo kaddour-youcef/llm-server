@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { RefreshCw, Plus, Users, AlertCircleIcon, CheckCircle2Icon } from "lucide-react"
+import { RefreshCw, Plus, Users, AlertCircleIcon, CheckCircle2Icon, Check, X } from "lucide-react"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { apiClient } from "@/lib/api"
 import Link from "next/link"
 import type { User } from "@/lib/types"
@@ -168,13 +169,56 @@ export function UsersManagement() {
                       ? new Date(user.created_at).toLocaleDateString("en-GB") // gives DD/MM/YYYY
                       : "—"}
                       </TableCell>
-                      <TableCell className="space-x-2">
-                        {user.status === 'pending' && (
-                          <Button size="sm" onClick={async () => { try { await apiClient.updateUser(user.id, { status: 'approved' }); setSuccess('User approved'); fetchUsers(); setTimeout(() => setSuccess(''), 2000) } catch (e) { setError(e instanceof Error ? e.message : 'Approve failed') } }}>Approve</Button>
-                        )}
-                        {user.status !== 'disabled' && (
-                          <Button size="sm" variant="outline" onClick={async () => { try { await apiClient.updateUser(user.id, { status: 'disabled' }); setSuccess('User disabled'); fetchUsers(); setTimeout(() => setSuccess(''), 2000) } catch (e) { setError(e instanceof Error ? e.message : 'Update failed') } }}>Disable</Button>
-                        )}
+                      <TableCell>
+                        {user.status === 'pending' ? (
+                          <div className="flex gap-2">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  size="icon"
+                                  variant="outline"
+                                  aria-label="Approve user"
+                                  onClick={async () => {
+                                    try {
+                                      await apiClient.updateUser(user.id, { status: 'approved' })
+                                      setSuccess('User approved')
+                                      fetchUsers()
+                                      setTimeout(() => setSuccess(''), 2000)
+                                    } catch (e) {
+                                      setError(e instanceof Error ? e.message : 'Approve failed')
+                                    }
+                                  }}
+                                >
+                                  <Check className="h-4 w-4 text-green-600" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent sideOffset={6}>Approve</TooltipContent>
+                            </Tooltip>
+
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  size="icon"
+                                  variant="outline"
+                                  aria-label="Decline user"
+                                  onClick={async () => {
+                                    try {
+                                      await apiClient.updateUser(user.id, { status: 'disabled' })
+                                      setSuccess('User declined')
+                                      fetchUsers()
+                                      setTimeout(() => setSuccess(''), 2000)
+                                    } catch (e) {
+                                      setError(e instanceof Error ? e.message : 'Decline failed')
+                                    }
+                                  }}
+                                >
+                                  <X className="h-4 w-4 text-red-600" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent sideOffset={6}>Decline</TooltipContent>
+                            </Tooltip>
+                          </div>
+                        ) : null}
                       </TableCell>
                     </TableRow>
                   ))

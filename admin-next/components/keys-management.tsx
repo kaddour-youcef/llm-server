@@ -15,6 +15,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { RefreshCw, Plus, Copy, RotateCcw, Trash2, Eye, EyeOff, Key, AlertCircleIcon, CheckCircle2Icon } from "lucide-react"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { apiClient } from "@/lib/api"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { CreateKeyModal } from "./modals/create-key-modal"
@@ -265,49 +266,71 @@ export function KeysManagement() {
                       : "—"}
                       </TableCell>
                       <TableCell>
-                        <div className="flex gap-1">
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button variant="outline" size="sm">
-                                <RotateCcw className="h-3 w-3" />
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>Rotate API Key</DialogTitle>
-                                <DialogDescription>
-                                  This will generate a new key and invalidate the old one. Are you sure?
-                                </DialogDescription>
-                              </DialogHeader>
-                              <div className="flex gap-2 justify-end">
-                                <Button variant="outline" onClick={() => rotateKey(key.id)}>
-                                  Rotate Key
-                                </Button>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
+                        {key.status === 'active' ? (
+                          <div className="flex gap-1">
+                            <Dialog>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <DialogTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      aria-label="Rotate key"
+                                      className="  "
+                                    >
+                                      <RotateCcw className="h-3 w-3" />
+                                    </Button>
+                                  </DialogTrigger>
+                                </TooltipTrigger>
+                                <TooltipContent sideOffset={6}>Rotate key</TooltipContent>
+                              </Tooltip>
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle>Rotate API Key</DialogTitle>
+                                  <DialogDescription>
+                                    This will generate a new key and invalidate the old one. Are you sure?
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <div className="flex gap-2 justify-end">
+                                  <Button variant="outline" onClick={() => rotateKey(key.id)}>
+                                    Rotate Key
+                                  </Button>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
 
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button variant="outline" size="sm">
-                                <Trash2 className="h-3 w-3" />
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>Revoke API Key</DialogTitle>
-                                <DialogDescription>
-                                  This will permanently disable this API key. Are you sure?
-                                </DialogDescription>
-                              </DialogHeader>
-                              <div className="flex gap-2 justify-end">
-                                <Button variant="destructive" onClick={() => revokeKey(key.id)}>
-                                  Revoke Key
-                                </Button>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
-                        </div>
+                            <Dialog>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <DialogTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      aria-label="Revoke key"
+                                      className="border-red-300 text-red-600 hover:bg-red-50"
+                                    >
+                                      <Trash2 className="h-3 w-3 text-red-600" />
+                                    </Button>
+                                  </DialogTrigger>
+                                </TooltipTrigger>
+                                <TooltipContent sideOffset={6}>Revoke key</TooltipContent>
+                              </Tooltip>
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle>Revoke API Key</DialogTitle>
+                                  <DialogDescription>
+                                    This will permanently disable this API key. Are you sure?
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <div className="flex gap-2 justify-end">
+                                  <Button variant="destructive" onClick={() => revokeKey(key.id)}>
+                                    Revoke Key
+                                  </Button>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                          </div>
+                        ) : null}
                       </TableCell>
                     </TableRow>
                   ))
