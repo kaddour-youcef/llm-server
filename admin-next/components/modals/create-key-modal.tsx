@@ -58,8 +58,9 @@ export function CreateKeyModal({ open, onOpenChange, onSuccess }: CreateKeyModal
   const fetchUsers = async () => {
     setLoadingUsers(true)
     try {
-      const data = await apiClient.getUsers()
-      setUsers(Array.isArray(data) ? data : [data].filter(Boolean))
+      const data = await apiClient.getUsers({ page: 1, page_size: 100 })
+      const items = Array.isArray((data as any)?.items) ? (data as any).items : Array.isArray(data) ? data : []
+      setUsers(items)
     } catch (err) {
       console.error("Failed to fetch users:", err)
     } finally {

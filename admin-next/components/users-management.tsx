@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { RefreshCw, Plus, Users, AlertCircleIcon, CheckCircle2Icon } from "lucide-react"
 import { apiClient } from "@/lib/api"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { CreateUserModal } from "./modals/create-user-modal"
 
 interface User {
@@ -21,13 +22,19 @@ export function UsersManagement() {
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
   const [createModalOpen, setCreateModalOpen] = useState(false)
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(25)
+  const [total, setTotal] = useState(0)
 
   const fetchUsers = async () => {
     setLoading(true)
     setError("")
     try {
-      const data = await apiClient.getUsers()
-      setUsers(Array.isArray(data) ? data : [data].filter(Boolean))
+      const data = await apiClient.getUsers({ page, page_size: pageSize })
+      const items = Array.isArray((data as any)?.items) ? (data as any).items : Array.isArray(data) ? data : []
+      const totalCount = typeof (data as any)?.total === "number" ? (data as any).total : items.length
+      setUsers(items)
+      setTotal(totalCount)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch users")
     } finally {
@@ -43,7 +50,12 @@ export function UsersManagement() {
 
   useEffect(() => {
     fetchUsers()
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, pageSize])
+
+  const totalPages = Math.max(1, Math.ceil(total / pageSize))
+  const canPrev = page > 1
+  const canNext = page < totalPages
 
   return (
     <div className="space-y-6">
@@ -119,6 +131,42 @@ export function UsersManagement() {
                 )}
               </TableBody>
             </Table>
+          </div>
+
+          <div className="flex items-center justify-between mt-4">
+            <div className="text-sm text-muted-foreground">
+              Page {page} of {totalPages} · {total} total
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 text-sm">
+                <span>Rows per page</span>
+                <Select
+                  value={String(pageSize)}
+                  onValueChange={(v) => {
+                    setPageSize(Number(v))
+                    setPage(1)
+                  }}
+                >
+                  <SelectTrigger className="h-8 w-[80px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="25">25</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={!canPrev}>
+                  Previous
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setPage((p) => p + 1)} disabled={!canNext}>
+                  Next
+                </Button>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>

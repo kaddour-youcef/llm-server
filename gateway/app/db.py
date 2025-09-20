@@ -5,7 +5,7 @@ from .config import settings
 from .models import User, APIKey, Audit
 from .security import hash_key
 import secrets
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Tuple
 import uuid
 
 
@@ -36,9 +36,33 @@ def create_user(db: Session, name: str, email: Optional[str]) -> Dict[str, Any]:
     return {"id": str(user.id), "name": user.name, "email": user.email}
 
 
-def list_users(db: Session) -> List[Dict[str, Any]]:
-    rows = db.query(User).all()
-    return [{"id": str(u.id), "name": u.name, "email": u.email, "created_at": u.created_at.isoformat() if hasattr(u, "created_at") and u.created_at else None,} for u in rows]
+def list_users(
+    db: Session,
+    page: Optional[int] = None,
+    page_size: Optional[int] = None,
+) -> Tuple[List[Dict[str, Any]], int]:
+    query = db.query(User).order_by(User.created_at.desc())
+    total = query.count()
+
+    if page and page_size:
+        offset = max(page - 1, 0) * page_size
+        query = query.offset(offset).limit(page_size)
+
+    rows = query.all()
+    return (
+        [
+            {
+                "id": str(u.id),
+                "name": u.name,
+                "email": u.email,
+                "created_at": u.created_at.isoformat()
+                if hasattr(u, "created_at") and u.created_at
+                else None,
+            }
+            for u in rows
+        ],
+        total,
+    )
 
 
 def create_api_key(
@@ -76,22 +100,38 @@ def create_api_key(
     }
 
 
-def list_keys(db: Session) -> List[Dict[str, Any]]:
-    rows = db.query(APIKey).all()
-    return [
-        {
-            "id": str(k.id),
-            "user_id": str(k.user_id),
-            "name": k.name,
-            "role": k.role,
-            "status": k.status,
-            "last4": k.key_last4,
-            "monthly_quota_tokens": k.monthly_token_quota,
-            "daily_request_quota": k.daily_request_quota,
-            "created_at": k.created_at.isoformat() if hasattr(k, "created_at") and k.created_at else None,
-        }
-        for k in rows
-    ]
+def list_keys(
+    db: Session,
+    page: Optional[int] = None,
+    page_size: Optional[int] = None,
+) -> Tuple[List[Dict[str, Any]], int]:
+    query = db.query(APIKey).order_by(APIKey.created_at.desc())
+    total = query.count()
+
+    if page and page_size:
+        offset = max(page - 1, 0) * page_size
+        query = query.offset(offset).limit(page_size)
+
+    rows = query.all()
+    return (
+        [
+            {
+                "id": str(k.id),
+                "user_id": str(k.user_id),
+                "name": k.name,
+                "role": k.role,
+                "status": k.status,
+                "last4": k.key_last4,
+                "monthly_quota_tokens": k.monthly_token_quota,
+                "daily_request_quota": k.daily_request_quota,
+                "created_at": k.created_at.isoformat()
+                if hasattr(k, "created_at") and k.created_at
+                else None,
+            }
+            for k in rows
+        ],
+        total,
+    )
 
 
 def revoke_key(db: Session, key_id: str) -> Dict[str, Any]:

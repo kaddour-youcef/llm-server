@@ -38,8 +38,12 @@ export class ApiClient {
   }
 
   // Users
-  async getUsers() {
-    return this.request("/admin/users")
+  async getUsers(params?: { page?: number; page_size?: number }) {
+    const search = new URLSearchParams()
+    if (params?.page) search.set("page", String(params.page))
+    if (params?.page_size) search.set("page_size", String(params.page_size))
+    const qs = search.toString()
+    return this.request(`/admin/users${qs ? `?${qs}` : ""}`)
   }
 
   async createUser(data: { name: string; email?: string }) {
@@ -50,8 +54,12 @@ export class ApiClient {
   }
 
   // API Keys
-  async getKeys() {
-    return this.request("/admin/keys")
+  async getKeys(params?: { page?: number; page_size?: number }) {
+    const search = new URLSearchParams()
+    if (params?.page) search.set("page", String(params.page))
+    if (params?.page_size) search.set("page_size", String(params.page_size))
+    const qs = search.toString()
+    return this.request(`/admin/keys${qs ? `?${qs}` : ""}`)
   }
 
   async createKey(data: {

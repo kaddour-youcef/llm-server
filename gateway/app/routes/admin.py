@@ -13,9 +13,19 @@ router = APIRouter()
 
 
 @router.get("/users")
-async def list_users(_: Principal = Depends(require_admin)):
+async def list_users(
+    _: Principal = Depends(require_admin),
+    page: int | None = Query(default=1, ge=1, description="Page number (1-based)"),
+    page_size: int | None = Query(default=25, ge=1, le=200, description="Items per page"),
+):
     with get_session() as db:
-        return db_list_users(db)
+        items, total = db_list_users(db, page=page, page_size=page_size)
+        return {
+            "items": items,
+            "page": page,
+            "page_size": page_size,
+            "total": total,
+        }
 
 
 @router.post("/users")
@@ -31,9 +41,19 @@ async def create_user(payload: UserCreate, principal: Principal = Depends(requir
 
 
 @router.get("/keys")
-async def list_keys(_: Principal = Depends(require_admin)):
+async def list_keys(
+    _: Principal = Depends(require_admin),
+    page: int | None = Query(default=1, ge=1, description="Page number (1-based)"),
+    page_size: int | None = Query(default=25, ge=1, le=200, description="Items per page"),
+):
     with get_session() as db:
-        return db_list_keys(db)
+        items, total = db_list_keys(db, page=page, page_size=page_size)
+        return {
+            "items": items,
+            "page": page,
+            "page_size": page_size,
+            "total": total,
+        }
 
 
 @router.post("/keys")
