@@ -95,7 +95,16 @@ export default function UserPortalPage() {
                   <TableRow key={r.id}>
                     <TableCell>{r.name}</TableCell>
                     <TableCell className="font-mono">{r.last4}</TableCell>
-                    <TableCell>{r.status}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <span>{r.status}</span>
+                        {r.status === 'active' && r.expires_at && new Date(r.expires_at as any).getTime() < Date.now() ? (
+                          <span className="inline-flex items-center rounded-md bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
+                            Expired
+                          </span>
+                        ) : null}
+                      </div>
+                    </TableCell>
                     <TableCell className="text-sm">
                       {r.expires_at ? (
                         (() => {

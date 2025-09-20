@@ -335,6 +335,12 @@ def rotate_key(db: Session, key_id: str) -> Dict[str, Any]:
     rec: APIKey = db.query(APIKey).get(key_id)
     if not rec:
         raise ValueError("key not found")
+    # Only allow rotation if key is expired
+    from datetime import datetime, timezone
+    now = datetime.now(timezone.utc)
+    exp = getattr(rec, "expires_at", None)
+    if exp is None or (exp.tzinfo and now <= exp) or (exp.tzinfo is None and now <= exp.replace(tzinfo=timezone.utc)):
+        raise ValueError("key not expired")
     rec.status = "revoked"
     db.add(rec)
     plaintext = secrets.token_urlsafe(32)

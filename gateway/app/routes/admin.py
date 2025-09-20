@@ -82,10 +82,12 @@ async def list_keys(
     _: Principal = Depends(require_admin),
     page: int | None = Query(default=1, ge=1, description="Page number (1-based)"),
     page_size: int | None = Query(default=25, ge=1, le=200, description="Items per page"),
-    sort_by: str | None = Query(default="created_at", description="Sort field: name|user_id|role|status|created_at"),
+    sort_by: str | None = Query(default="created_at", description="Sort field: name|user_id|role|status|created_at|expires_at"),
     sort_dir: str | None = Query(default="desc", description="Sort direction: asc|desc"),
     status: str | None = Query(default=None, description="Filter by status: active|revoked"),
     q: str | None = Query(default=None, description="Search keys by name, last4, role, or user_id"),
+    expired: bool | None = Query(default=None, description="Filter by expiration status: true=expired, false=not expired (incl. unlimited)"),
+    has_expiration: bool | None = Query(default=None, description="Filter to keys that have an expiration date or not"),
 ):
     with get_session() as db:
         items, total = db_list_keys(
@@ -96,6 +98,8 @@ async def list_keys(
             sort_dir=sort_dir,
             status=status,
             q=q,
+            expired=expired,
+            has_expiration=has_expiration,
         )
         return {
             "items": items,
@@ -139,8 +143,14 @@ async def rotate_key(key_id: str, principal: Principal = Depends(require_admin))
             rec = db_rotate_key(db, key_id)
             db_audit(db, principal.key_id, "ROTATE_KEY", key_id, None)
             return rec
-        except ValueError:
-            raise HTTPException(status_code=404, detail="Key not found")
+        except ValueError as e:
+            msg = str(e)
+            if msg == "key not found":
+                raise HTTPException(status_code=404, detail="Key not found")
+            elif msg == "key not expired":
+                raise HTTPException(status_code=400, detail="Key is not expired; rotation not allowed")
+            else:
+                raise HTTPException(status_code=400, detail=msg or "Rotation not allowed")
 
 
 @router.get("/usage")

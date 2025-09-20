@@ -150,6 +150,8 @@ export class ApiClient {
     sort_dir?: SortDir
     status?: "active" | "revoked"
     q?: string
+    expired?: boolean
+    has_expiration?: boolean
   }): Promise<Paginated<ApiKey>> {
     const search = new URLSearchParams()
     if (params?.page) search.set("page", String(params.page))
@@ -158,6 +160,8 @@ export class ApiClient {
     if (params?.sort_dir) search.set("sort_dir", params.sort_dir)
     if (params?.status) search.set("status", params.status)
     if (params?.q) search.set("q", params.q)
+    if (params?.expired !== undefined) search.set("expired", String(params.expired))
+    if (params?.has_expiration !== undefined) search.set("has_expiration", String(params.has_expiration))
     const qs = search.toString()
     return this.request(`/admin/keys${qs ? `?${qs}` : ""}`)
   }

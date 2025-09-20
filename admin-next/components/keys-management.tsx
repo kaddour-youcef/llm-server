@@ -31,9 +31,10 @@ export function KeysManagement() {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(25)
   const [total, setTotal] = useState(0)
-  const [sortBy, setSortBy] = useState<"created_at" | "name" | "user_id" | "role" | "status">("created_at")
+  const [sortBy, setSortBy] = useState<"created_at" | "name" | "user_id" | "role" | "status" | "expires_at">("created_at")
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc")
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "revoked">("all")
+  const [expirationFilter, setExpirationFilter] = useState<"all" | "expired" | "not_expired" | "has_date" | "unlimited">("all")
   const [query, setQuery] = useState("")
   const [debouncedQuery, setDebouncedQuery] = useState("")
 
@@ -53,6 +54,8 @@ export function KeysManagement() {
         sort_dir: sortDir,
         status: statusFilter === "all" ? undefined : statusFilter,
         q: debouncedQuery || undefined,
+        expired: expirationFilter === "expired" ? true : expirationFilter === "not_expired" ? false : undefined,
+        has_expiration: expirationFilter === "has_date" ? true : expirationFilter === "unlimited" ? false : undefined,
       })
       setKeys(data.items)
       setTotal(data.total)
@@ -161,8 +164,21 @@ export function KeysManagement() {
           </Select>
         </div>
         <div className="flex items-center gap-2 text-sm">
+          <span>Expiration</span>
+          <Select value={expirationFilter} onValueChange={(v: "all" | "expired" | "not_expired" | "has_date" | "unlimited") => { setExpirationFilter(v); setPage(1) }}>
+            <SelectTrigger className="h-8 w-[170px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="expired">Expired only</SelectItem>
+              <SelectItem value="not_expired">Not expired</SelectItem>
+              <SelectItem value="has_date">Has expiration</SelectItem>
+              <SelectItem value="unlimited">Unlimited only</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center gap-2 text-sm">
           <span>Sort by</span>
-          <Select value={sortBy} onValueChange={(v: "created_at" | "name" | "user_id" | "role" | "status") => { setSortBy(v); setPage(1) }}>
+          <Select value={sortBy} onValueChange={(v: "created_at" | "name" | "user_id" | "role" | "status" | "expires_at") => { setSortBy(v); setPage(1) }}>
             <SelectTrigger className="h-8 w-[150px]"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="created_at">Created</SelectItem>
@@ -170,6 +186,7 @@ export function KeysManagement() {
               <SelectItem value="user_id">User ID</SelectItem>
               <SelectItem value="role">Role</SelectItem>
               <SelectItem value="status">Status</SelectItem>
+              <SelectItem value="expires_at">Expires</SelectItem>
             </SelectContent>
           </Select>
           <Select value={sortDir} onValueChange={(v: "asc" | "desc") => { setSortDir(v); setPage(1) }}>
@@ -256,9 +273,14 @@ export function KeysManagement() {
                         <div>Daily: {key.daily_request_quota || "∞"}</div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={key.status === "active" ? "default" : "destructive"}>
-                          {key.status === "active" ? "Active" : "Revoked"}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={key.status === "active" ? "default" : "destructive"}>
+                            {key.status === "active" ? "Active" : "Revoked"}
+                          </Badge>
+                          {key.status === 'active' && key.expires_at && new Date(key.expires_at as string).getTime() < Date.now() ? (
+                            <Badge variant="destructive">Expired</Badge>
+                          ) : null}
+                        </div>
                       </TableCell>
                       <TableCell className="text-sm">
                         {key.expires_at ? (
@@ -286,37 +308,41 @@ export function KeysManagement() {
                       <TableCell>
                         {key.status === 'active' ? (
                           <div className="flex gap-1">
-                            <Dialog>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <DialogTrigger asChild>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      aria-label="Rotate key"
-                                      className="  "
-                                    >
-                                      <RotateCcw className="h-3 w-3" />
+                            {/* Rotate only if expired */}
+                            {key.expires_at && new Date(key.expires_at as string).getTime() < Date.now() && (
+                              <Dialog>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <DialogTrigger asChild>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        aria-label="Rotate key"
+                                        className="  "
+                                      >
+                                        <RotateCcw className="h-3 w-3" />
+                                      </Button>
+                                    </DialogTrigger>
+                                  </TooltipTrigger>
+                                  <TooltipContent sideOffset={6}>Rotate key</TooltipContent>
+                                </Tooltip>
+                                <DialogContent>
+                                  <DialogHeader>
+                                    <DialogTitle>Rotate API Key</DialogTitle>
+                                    <DialogDescription>
+                                      This will generate a new key and invalidate the old one. Are you sure?
+                                    </DialogDescription>
+                                  </DialogHeader>
+                                  <div className="flex gap-2 justify-end">
+                                    <Button variant="outline" onClick={() => rotateKey(key.id)}>
+                                      Rotate Key
                                     </Button>
-                                  </DialogTrigger>
-                                </TooltipTrigger>
-                                <TooltipContent sideOffset={6}>Rotate key</TooltipContent>
-                              </Tooltip>
-                              <DialogContent>
-                                <DialogHeader>
-                                  <DialogTitle>Rotate API Key</DialogTitle>
-                                  <DialogDescription>
-                                    This will generate a new key and invalidate the old one. Are you sure?
-                                  </DialogDescription>
-                                </DialogHeader>
-                                <div className="flex gap-2 justify-end">
-                                  <Button variant="outline" onClick={() => rotateKey(key.id)}>
-                                    Rotate Key
-                                  </Button>
-                                </div>
-                              </DialogContent>
-                            </Dialog>
+                                  </div>
+                                </DialogContent>
+                              </Dialog>
+                            )}
 
+                            {/* Revoke always available for active keys */}
                             <Dialog>
                               <Tooltip>
                                 <TooltipTrigger asChild>

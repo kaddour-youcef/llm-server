@@ -255,7 +255,16 @@ export default function UserDetailPage() {
                         <TableCell className="font-medium">{k.name}</TableCell>
                         <TableCell className="font-mono">{k.last4}</TableCell>
                         <TableCell>{k.role}</TableCell>
-                        <TableCell>{k.status}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <span>{k.status}</span>
+                            {k.status === 'active' && k.expires_at && new Date(k.expires_at as any).getTime() < Date.now() ? (
+                              <span className="inline-flex items-center rounded-md bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
+                                Expired
+                              </span>
+                            ) : null}
+                          </div>
+                        </TableCell>
                         <TableCell className="text-sm">
                           {k.expires_at ? (
                             (() => {
@@ -277,19 +286,23 @@ export default function UserDetailPage() {
                         <TableCell className="flex gap-2">
                           {k.status === 'active' ? (
                             <>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className=""
-                                    onClick={() => handleRotate(k.id)}
-                                  >
-                                    <RotateCcw className="h-4 w-4" /> Rotate
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent sideOffset={6}>Rotate key</TooltipContent>
-                              </Tooltip>
+                              {/* Rotate when expired */}
+                              {k.expires_at && new Date(k.expires_at as any).getTime() < Date.now() && (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className=""
+                                      onClick={() => handleRotate(k.id)}
+                                    >
+                                      <RotateCcw className="h-4 w-4" /> Rotate
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent sideOffset={6}>Rotate key</TooltipContent>
+                                </Tooltip>
+                              )}
+                              {/* Revoke always shown for active */}
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <Button size="sm" variant="destructive" onClick={() => handleRevoke(k.id)}>
