@@ -19,6 +19,15 @@ from .schemas import (
     KeyCreate,
     KeyOut,
     UserDetailOut,
+    # organizations / teams / memberships
+    OrganizationCreate,
+    OrganizationOut,
+    OrganizationUpdate,
+    TeamCreate,
+    TeamOut,
+    TeamUpdate,
+    MembershipCreate,
+    MembershipOut,
 )
 from .auth import Principal
 from .config import Settings
@@ -40,9 +49,17 @@ __all__ = [
     "KeyCreate",
     "KeyOut",
     "UserDetailOut",
+    # org/team/membership schemas
+    "OrganizationCreate",
+    "OrganizationOut",
+    "OrganizationUpdate",
+    "TeamCreate",
+    "TeamOut",
+    "TeamUpdate",
+    "MembershipCreate",
+    "MembershipOut",
     # auth principal
     "Principal",
     # settings
     "Settings",
 ]
-

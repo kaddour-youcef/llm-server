@@ -4,7 +4,7 @@ from ..auth import require_key, Principal
 from ..types import ChatCompletionRequest
 from ..ratelimit import check_rate_limit
 from ..queue import enqueue_job
-from ..accounting import record_request
+from ..accounting import record_request, enforce_org_quota
 import asyncio
 import time
 
@@ -18,6 +18,8 @@ async def list_models():
 @router.post("/v1/chat/completions")
 async def chat_completions(body: ChatCompletionRequest, principal: Principal = Depends(require_key)):
     await check_rate_limit(principal.key_id)
+    # Enforce org-level token quota if configured
+    await enforce_org_quota(principal.organization_id)
 
     started = time.time()
     job = await enqueue_job(
@@ -40,6 +42,9 @@ async def chat_completions(body: ChatCompletionRequest, principal: Principal = D
                     latency_ms = int((time.time() - started) * 1000)
                     await record_request(
                         key_id=principal.key_id,
+                        organization_id=principal.organization_id,
+                        owner_type=principal.owner_type,
+                        owner_id=principal.owner_id,
                         user_id=principal.user_id,
                         endpoint="/v1/chat/completions",
                         model=(body.model or None),
@@ -90,6 +95,9 @@ async def chat_completions(body: ChatCompletionRequest, principal: Principal = D
 
     await record_request(
         key_id=principal.key_id,
+        organization_id=principal.organization_id,
+        owner_type=principal.owner_type,
+        owner_id=principal.owner_id,
         user_id=principal.user_id,
         endpoint="/v1/chat/completions",
         model=(body.model or None),

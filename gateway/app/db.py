@@ -2,7 +2,7 @@ from contextlib import contextmanager
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from .config import settings
-from .models import User, APIKey, Audit
+from .models import User, APIKey, Audit, Organization, Team, Membership
 from .security import hash_key, verify_key
 import secrets
 from typing import Optional, List, Dict, Any, Tuple
@@ -158,9 +158,12 @@ def list_users(
 
 def create_api_key(
     db: Session,
-    user_id: str,
+    *,
     name: str,
     role: str = "user",
+    owner_type: Optional[str] = None,
+    owner_id: Optional[str] = None,
+    user_id: Optional[str] = None,  # legacy field for compatibility
     monthly_quota_tokens: Optional[int] = None,
     daily_request_quota: Optional[int] = None,
     expires_at: Optional[str] = None,
@@ -187,8 +190,16 @@ def create_api_key(
     plaintext = secrets.token_urlsafe(32)
     key_hash = hash_key(plaintext)
     last4 = plaintext[-4:]
+    # Determine ownership
+    resolved_owner_type = (owner_type or ("user" if user_id else None)) or "user"
+    resolved_owner_id = owner_id or user_id
+    if not resolved_owner_id:
+        raise ValueError("owner_id or user_id is required")
+
     rec = APIKey(
-        user_id=user_id,
+        user_id=resolved_owner_id if resolved_owner_type == "user" else None,
+        owner_type=resolved_owner_type,
+        owner_id=resolved_owner_id,
         name=name,
         key_hash=key_hash,
         key_last4=last4,
@@ -203,7 +214,9 @@ def create_api_key(
     db.refresh(rec)
     return {
         "id": str(rec.id),
-        "user_id": str(rec.user_id),
+        "owner_type": rec.owner_type,
+        "owner_id": str(rec.owner_id),
+        "user_id": str(rec.user_id) if getattr(rec, "user_id", None) else None,
         "name": rec.name,
         "role": rec.role,
         "status": rec.status,
@@ -274,7 +287,9 @@ def list_keys(
         [
             {
                 "id": str(k.id),
-                "user_id": str(k.user_id),
+                "owner_type": k.owner_type,
+                "owner_id": str(k.owner_id),
+                "user_id": str(k.user_id) if getattr(k, "user_id", None) else None,
                 "name": k.name,
                 "role": k.role,
                 "status": k.status,
@@ -297,7 +312,9 @@ def list_keys_for_user(db: Session, user_id: str) -> List[Dict[str, Any]]:
     return [
         {
             "id": str(k.id),
-            "user_id": str(k.user_id),
+            "owner_type": k.owner_type,
+            "owner_id": str(k.owner_id),
+            "user_id": str(k.user_id) if getattr(k, "user_id", None) else None,
             "name": k.name,
             "role": k.role,
             "status": k.status,
@@ -320,7 +337,9 @@ def revoke_key(db: Session, key_id: str) -> Dict[str, Any]:
     db.refresh(rec)
     return {
         "id": str(rec.id),
-        "user_id": str(rec.user_id),
+        "owner_type": rec.owner_type,
+        "owner_id": str(rec.owner_id),
+        "user_id": str(rec.user_id) if getattr(rec, "user_id", None) else None,
         "name": rec.name,
         "role": rec.role,
         "status": rec.status,
@@ -345,7 +364,9 @@ def rotate_key(db: Session, key_id: str) -> Dict[str, Any]:
     db.add(rec)
     plaintext = secrets.token_urlsafe(32)
     new = APIKey(
-        user_id=rec.user_id,
+        user_id=rec.user_id if getattr(rec, "owner_type", "user") == "user" else None,
+        owner_type=rec.owner_type,
+        owner_id=rec.owner_id,
         name=rec.name,
         key_hash=hash_key(plaintext),
         key_last4=plaintext[-4:],
@@ -378,3 +399,139 @@ def audit(db: Session, actor_key_id: Optional[str], action: str, target_id: Opti
     )
     db.add(rec)
     db.commit()
+
+
+# -------------------
+# Organizations CRUD
+# -------------------
+
+def create_organization(db: Session, name: str, status: str = "active", monthly_token_quota: Optional[int] = None, settings: Optional[dict] = None) -> Dict[str, Any]:
+    org = Organization(name=name, status=status, monthly_token_quota=monthly_token_quota, settings=settings or {})
+    db.add(org)
+    db.commit()
+    db.refresh(org)
+    return {
+        "id": str(org.id),
+        "name": org.name,
+        "status": org.status,
+        "monthly_token_quota": org.monthly_token_quota,
+        "settings": org.settings or {},
+    }
+
+
+def list_organizations(db: Session) -> List[Dict[str, Any]]:
+    rows = db.query(Organization).order_by(asc(Organization.name)).all()
+    return [{"id": str(o.id), "name": o.name, "status": o.status, "monthly_token_quota": o.monthly_token_quota} for o in rows]
+
+
+def get_organization(db: Session, org_id: str) -> Optional[Dict[str, Any]]:
+    rec: Optional[Organization] = db.query(Organization).get(org_id)
+    if not rec:
+        return None
+    return {"id": str(rec.id), "name": rec.name, "status": rec.status, "monthly_token_quota": rec.monthly_token_quota, "settings": rec.settings or {}}
+
+
+def update_organization(db: Session, org_id: str, name: Optional[str] = None, status: Optional[str] = None, monthly_token_quota: Optional[int] = None, settings: Optional[dict] = None) -> Optional[Dict[str, Any]]:
+    rec: Optional[Organization] = db.query(Organization).get(org_id)
+    if not rec:
+        return None
+    if name is not None:
+        rec.name = name
+    if status is not None:
+        rec.status = status
+    if monthly_token_quota is not None:
+        rec.monthly_token_quota = monthly_token_quota
+    if settings is not None:
+        rec.settings = settings
+    db.commit()
+    db.refresh(rec)
+    return {"id": str(rec.id), "name": rec.name, "status": rec.status, "monthly_token_quota": rec.monthly_token_quota, "settings": rec.settings or {}}
+
+
+def delete_organization(db: Session, org_id: str) -> bool:
+    rec: Optional[Organization] = db.query(Organization).get(org_id)
+    if not rec:
+        return False
+    db.delete(rec)
+    db.commit()
+    return True
+
+
+# ---------
+# Teams
+# ---------
+
+def create_team(db: Session, organization_id: str, name: str, description: Optional[str] = None) -> Dict[str, Any]:
+    team = Team(organization_id=organization_id, name=name, description=description)
+    db.add(team)
+    db.commit()
+    db.refresh(team)
+    return {"id": str(team.id), "organization_id": str(team.organization_id), "name": team.name, "description": team.description}
+
+
+def list_teams(db: Session, organization_id: Optional[str] = None) -> List[Dict[str, Any]]:
+    q = db.query(Team)
+    if organization_id:
+        q = q.filter(Team.organization_id == organization_id)
+    rows = q.order_by(asc(Team.name)).all()
+    return [{"id": str(t.id), "organization_id": str(t.organization_id), "name": t.name, "description": t.description} for t in rows]
+
+
+def get_team(db: Session, team_id: str) -> Optional[Dict[str, Any]]:
+    t: Optional[Team] = db.query(Team).get(team_id)
+    if not t:
+        return None
+    return {"id": str(t.id), "organization_id": str(t.organization_id), "name": t.name, "description": t.description}
+
+
+def update_team(db: Session, team_id: str, name: Optional[str] = None, description: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    t: Optional[Team] = db.query(Team).get(team_id)
+    if not t:
+        return None
+    if name is not None:
+        t.name = name
+    if description is not None:
+        t.description = description
+    db.commit()
+    db.refresh(t)
+    return {"id": str(t.id), "organization_id": str(t.organization_id), "name": t.name, "description": t.description}
+
+
+def delete_team(db: Session, team_id: str) -> bool:
+    t: Optional[Team] = db.query(Team).get(team_id)
+    if not t:
+        return False
+    db.delete(t)
+    db.commit()
+    return True
+
+
+# -------------
+# Memberships
+# -------------
+
+def add_membership(db: Session, team_id: str, user_id: str, role: str = "member") -> Dict[str, Any]:
+    m = Membership(team_id=team_id, user_id=user_id, role=role)
+    db.add(m)
+    db.commit()
+    db.refresh(m)
+    return {"id": str(m.id), "team_id": str(m.team_id), "user_id": str(m.user_id), "role": m.role}
+
+
+def list_memberships(db: Session, team_id: Optional[str] = None, user_id: Optional[str] = None) -> List[Dict[str, Any]]:
+    q = db.query(Membership)
+    if team_id:
+        q = q.filter(Membership.team_id == team_id)
+    if user_id:
+        q = q.filter(Membership.user_id == user_id)
+    rows = q.all()
+    return [{"id": str(m.id), "team_id": str(m.team_id), "user_id": str(m.user_id), "role": m.role} for m in rows]
+
+
+def remove_membership(db: Session, membership_id: str) -> bool:
+    m: Optional[Membership] = db.query(Membership).get(membership_id)
+    if not m:
+        return False
+    db.delete(m)
+    db.commit()
+    return True

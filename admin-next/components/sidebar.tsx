@@ -27,6 +27,8 @@ export function AppSidebar() {
   const navigationItems = [
     { href: "/admin/users", label: "Users", icon: Users },
     { href: "/admin/keys", label: "API Keys", icon: Key },
+    { href: "/admin/organizations", label: "Organizations", icon: BarChart3 },
+    { href: "/admin/teams", label: "Teams", icon: Users },
     { href: "/admin/usage", label: "Usage Analytics", icon: BarChart3 },
     { href: "/admin/requests", label: "Request Logs", icon: FileText },
   ]

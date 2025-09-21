@@ -38,7 +38,12 @@ class UserUpdate(BaseModel):
 
 
 class KeyCreate(BaseModel):
-    user_id: str
+    # flexible ownership
+    owner_type: Optional[str] = None  # 'user' | 'team'; defaults to 'user' if user_id is provided
+    owner_id: Optional[str] = None
+    # legacy support
+    user_id: Optional[str] = None
+    # key params
     name: str
     role: Optional[str] = "user"
     monthly_quota_tokens: Optional[int] = None
@@ -48,7 +53,9 @@ class KeyCreate(BaseModel):
 
 class KeyOut(BaseModel):
     id: str
-    user_id: str
+    owner_type: str
+    owner_id: str
+    user_id: Optional[str] = None
     name: str
     role: str
     status: str
@@ -62,6 +69,57 @@ class UserDetailOut(BaseModel):
     created_at: Optional[str] = None
     status: Optional[str] = None
     keys: list[KeyOut] = []
+
+
+# Organizations / Teams
+class OrganizationCreate(BaseModel):
+    name: str
+    status: Optional[str] = "active"
+    monthly_token_quota: Optional[int] = None
+
+
+class OrganizationOut(BaseModel):
+    id: str
+    name: str
+    status: Optional[str] = None
+    monthly_token_quota: Optional[int] = None
+
+
+class OrganizationUpdate(BaseModel):
+    name: Optional[str] = None
+    status: Optional[str] = None
+    monthly_token_quota: Optional[int] = None
+
+
+class TeamCreate(BaseModel):
+    organization_id: str
+    name: str
+    description: Optional[str] = None
+
+
+class TeamOut(BaseModel):
+    id: str
+    organization_id: str
+    name: str
+    description: Optional[str] = None
+
+
+class TeamUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+
+
+class MembershipCreate(BaseModel):
+    team_id: str
+    user_id: str
+    role: Optional[str] = "member"
+
+
+class MembershipOut(BaseModel):
+    id: str
+    team_id: str
+    user_id: str
+    role: str
 
 
 # Public auth flows

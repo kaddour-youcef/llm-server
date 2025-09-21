@@ -23,7 +23,9 @@ export interface User {
 
 export interface ApiKey {
   id: string
-  user_id: string
+  owner_type: 'user' | 'team'
+  owner_id: string
+  user_id?: string | null
   name: string
   role: ApiKeyRole
   status: ApiKeyStatus
@@ -51,7 +53,9 @@ export interface UpdateUser {
 }
 
 export interface CreateKeyRequest {
-  user_id: string
+  owner_type?: 'user' | 'team'
+  owner_id?: string
+  user_id?: string
   name: string
   role: ApiKeyRole
   monthly_quota_tokens?: number | null
@@ -61,13 +65,36 @@ export interface CreateKeyRequest {
 
 export interface CreateKeyResponse {
   id: string
-  user_id: string
+  owner_type: 'user' | 'team'
+  owner_id: string
+  user_id?: string | null
   name: string
   role: ApiKeyRole
   status: ApiKeyStatus
   last4: string
   expires_at?: string | null
   plaintext_key?: string
+}
+
+export interface Organization {
+  id: string
+  name: string
+  status?: string | null
+  monthly_token_quota?: number | null
+}
+
+export interface Team {
+  id: string
+  organization_id: string
+  name: string
+  description?: string | null
+}
+
+export interface Membership {
+  id: string
+  team_id: string
+  user_id: string
+  role: string
 }
 
 export interface RequestLog {

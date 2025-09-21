@@ -16,6 +16,9 @@ import type {
   UserDetail,
   UpdateUser,
   CreateUser,
+  Organization,
+  Team,
+  Membership,
 } from "@/lib/types"
 
 export class ApiClient {
@@ -194,6 +197,58 @@ export class ApiClient {
   // Requests
   async getRequests(): Promise<RequestLog[] | RequestLog> {
     return this.request("/admin/requests")
+  }
+
+  // Organizations
+  async getOrganizations(): Promise<{ items: Organization[] }> {
+    return this.request("/admin/organizations")
+  }
+
+  async createOrganization(data: { name: string; status?: string; monthly_token_quota?: number | null }): Promise<Organization> {
+    return this.request("/admin/organizations", { method: 'POST', body: JSON.stringify(data) })
+  }
+
+  async updateOrganization(id: string, data: { name?: string; status?: string; monthly_token_quota?: number | null }): Promise<Organization> {
+    return this.request(`/admin/organizations/${id}`, { method: 'PATCH', body: JSON.stringify(data) })
+  }
+
+  async deleteOrganization(id: string): Promise<{ ok: boolean }> {
+    return this.request(`/admin/organizations/${id}`, { method: 'DELETE' })
+  }
+
+  // Teams
+  async getTeams(params?: { organization_id?: string }): Promise<{ items: Team[] }> {
+    const qs = params?.organization_id ? `?organization_id=${encodeURIComponent(params.organization_id)}` : ''
+    return this.request(`/admin/teams${qs}`)
+  }
+
+  async createTeam(data: { organization_id: string; name: string; description?: string | null }): Promise<Team> {
+    return this.request('/admin/teams', { method: 'POST', body: JSON.stringify(data) })
+    }
+
+  async updateTeam(id: string, data: { name?: string; description?: string | null }): Promise<Team> {
+    return this.request(`/admin/teams/${id}`, { method: 'PATCH', body: JSON.stringify(data) })
+  }
+
+  async deleteTeam(id: string): Promise<{ ok: boolean }> {
+    return this.request(`/admin/teams/${id}`, { method: 'DELETE' })
+  }
+
+  // Memberships
+  async getMemberships(params?: { team_id?: string; user_id?: string }): Promise<{ items: Membership[] }> {
+    const search = new URLSearchParams()
+    if (params?.team_id) search.set('team_id', params.team_id)
+    if (params?.user_id) search.set('user_id', params.user_id)
+    const qs = search.toString()
+    return this.request(`/admin/memberships${qs ? `?${qs}` : ''}`)
+  }
+
+  async addMembership(data: { team_id: string; user_id: string; role?: string }): Promise<Membership> {
+    return this.request('/admin/memberships', { method: 'POST', body: JSON.stringify(data) })
+  }
+
+  async removeMembership(id: string): Promise<{ ok: boolean }> {
+    return this.request(`/admin/memberships/${id}`, { method: 'DELETE' })
   }
 }
 
