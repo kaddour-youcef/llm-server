@@ -38,7 +38,7 @@ origins = sorted(origins_set)
 
 
 
-# Allow your Next.js frontend to talk to the API
+# Allow  Next.js frontend to talk to the API
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,

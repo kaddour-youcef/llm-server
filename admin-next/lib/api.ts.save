@@ -1,16 +1,4 @@
 // Prefer browser-exposed env; fall back for dev
-const GATEWAY_URL =  process.env.NEXT_PUBLIC_GATEWAY_URL || "http://10.133.109.66:8080"
-
-
-/** for loca : 
- * 
- * // Prefer browser-exposed env; fall back for dev
-  const GATEWAY_URL =
-  process.env.NEXT_PUBLIC_GATEWAY_URL ||
-  process.env.GATEWAY_URL ||
-  "http://localhost:8080"
-
- */
 
 import type {
   ApiKey,
@@ -109,24 +97,9 @@ export class ApiClient {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     })
-
-    if (!res.ok) {
-      let detail = "Registration failed"
-      try {
-        const errJson = await res.json()
-        detail = errJson?.detail || detail
-      } catch { /* ignore */ }
-      throw new Error(detail)
-    }
-
-    // Handle 200 with or without JSON body
-    try {
-      return await res.json()
-    } catch {
-      return { ok: true }
-    }
+    if (!res.ok) throw new Error((await res.json()).detail || "Registration failed")
+    return res.json()
   }
-
 
   async userLogin(data: { email: string; password: string }) {
     const res = await fetch(`${GATEWAY_URL}/auth/login`, {

@@ -36,14 +36,17 @@ export const useUserAuthStore = create<UserAuthState>()(
       async register(name, email, password) {
         set({ isBusy: true })
         try {
-          await apiClient.userRegister({ name, email, password })
+          const result = await apiClient.userRegister({ name, email, password })
+          console.log("register success:", result)
           set({ isBusy: false })
           return true
-        } catch {
+        } catch (err) {
+          console.error("register error:", err)
           set({ isBusy: false })
           return false
         }
       },
+
 
       async refresh() {
         const { refreshToken } = get()
